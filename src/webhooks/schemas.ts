@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const userSchema = z.object({ id: z.number().int().positive(), login: z.string().min(1) });
+const userSchema = z.object({
+  id: z.number().int().positive(),
+  login: z.string().min(1),
+  node_id: z.string().min(1),
+});
 const repositorySchema = z.object({
   name: z.string().min(1),
   owner: z.object({ login: z.string().min(1) }),
@@ -27,9 +31,11 @@ export const issuesEventSchema = z.object({
   repository: repositorySchema,
   issue: z.object({
     number: z.number().int().positive(),
+    title: z.string().min(1),
     node_id: z.string().min(1),
     body: z.string().nullable(),
     state: z.string(),
+    created_at: z.string().datetime(),
     user: userSchema.nullable(),
     pull_request: z.unknown().optional(),
   }),

@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { acceptanceComplete, contributionPrNumber } from "../src/application/issueForm.js";
+import { acceptanceComplete, checked } from "../src/application/issueForm.js";
 
-const body = `### Contribution pull request number\n\n#123\n\n### Acceptance\n\n- [x] I have read and agree to the Contributor License Agreement.\n\n### Identity confirmation\n\n- [X] I am submitting this agreement for my own authenticated GitHub account.`;
+const ACCEPTANCE = "I have read and agree to the Contributor License Agreement.";
+const IDENTITY = "I am submitting this agreement for my own authenticated GitHub account.";
+
+function issueBody(acceptance = "x", identity = "X"): string {
+  return `### Acceptance\n\n- [${acceptance}] ${ACCEPTANCE}\n\n### Identity confirmation\n\n- [${identity}] ${IDENTITY}`;
+}
 
 describe("issue form", () => {
-  it("parses acceptance and PR number", () => {
-    expect(acceptanceComplete(body)).toBe(true);
-    expect(contributionPrNumber(body)).toBe(123);
+  it("accepts the signing form when both required boxes are checked", () => {
+    expect(acceptanceComplete(issueBody())).toBe(true);
+  });
+
+  it("rejects the signing form when either required box is unchecked", () => {
+    expect(acceptanceComplete(issueBody(" ", "X"))).toBe(false);
+    expect(acceptanceComplete(issueBody("x", " "))).toBe(false);
+  });
+
+  it("matches checkbox labels case-insensitively while requiring the complete label", () => {
+    expect(checked(`- [x] ${ACCEPTANCE.toUpperCase()}`, ACCEPTANCE)).toBe(true);
+    expect(checked("- [x] I agree.", ACCEPTANCE)).toBe(false);
   });
 });

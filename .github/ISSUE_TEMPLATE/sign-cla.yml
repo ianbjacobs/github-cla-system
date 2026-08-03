@@ -1,5 +1,5 @@
-name: Sign Contributor License Agreement
-description: Accept the Contributor License Agreement for a contribution
+name: Sign Contributor Agreement
+description: Accept the repository's Contributor License Agreement
 title: "[CLA] Contributor agreement"
 labels:
   - agreement
@@ -9,15 +9,25 @@ body:
     attributes:
       value: |
         # Contributor License Agreement
-        Submit this form with the same authenticated GitHub account that opened the contribution pull request.
-  - type: input
-    id: contribution-pr
-    attributes:
-      label: Contribution pull request number
-      description: Enter the number of your contribution pull request.
-      placeholder: "123"
-    validations:
-      required: true
+
+        > **Repository configuration required**
+        >
+        > Maintainers must replace this placeholder with the complete legal terms from `.github/cla/agreement.md` before enabling the workflow. The Issue Form and canonical agreement file must contain the same agreement text.
+
+        ## Agreement metadata
+
+        - **Version:** 1.0
+        - **Effective date:** _Set an effective date before enabling the workflow._
+
+        ## Terms and conditions
+
+        > **REQUIRED:** Replace this notice with the complete Contributor License Agreement terms approved for the project.
+
+        ## Electronic acceptance
+
+        Submitting this GitHub issue and selecting both required acceptance checkboxes constitutes the contributor's electronic acceptance of this Agreement. The authenticated GitHub account used to submit the issue is treated as the identity of the signer.
+
+        The generated Agreement pull request records the immutable GitHub numeric user ID, GitHub user node ID, login, repository, agreement version and blob SHA, signing timestamp, issue number, and issue node ID. The agreement becomes authoritative only after a maintainer reviews and merges that pull request.
   - type: checkboxes
     id: acceptance
     attributes:

@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG: ClaConfig = {
   agreementVersion: "1.0",
   agreementTemplatePath: ".github/cla/agreement.md",
   agreementRegistryPath: "AGREEMENTS.yaml",
+  agreementRecordsDirectory: "agreements",
   statusCheckName: "Contributor License Agreement",
   labels: { agreement: "agreement", pending: "pending-cla" },
 };
@@ -17,6 +18,7 @@ const schema = z
     agreementVersion: z.string().min(1).default(DEFAULT_CONFIG.agreementVersion),
     agreementTemplatePath: z.string().min(1).default(DEFAULT_CONFIG.agreementTemplatePath),
     agreementRegistryPath: z.string().min(1).default(DEFAULT_CONFIG.agreementRegistryPath),
+    agreementRecordsDirectory: z.string().min(1).default(DEFAULT_CONFIG.agreementRecordsDirectory),
     statusCheckName: z.string().min(1).default(DEFAULT_CONFIG.statusCheckName),
     labels: z
       .object({
@@ -35,5 +37,6 @@ export function parseRepositoryConfig(source: string | null): ClaConfig {
     ...config,
     agreementTemplatePath: safePath(config.agreementTemplatePath),
     agreementRegistryPath: safePath(config.agreementRegistryPath),
+    agreementRecordsDirectory: safePath(config.agreementRecordsDirectory),
   };
 }

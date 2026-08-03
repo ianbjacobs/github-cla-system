@@ -37,6 +37,31 @@ export class GitHubGateway {
     }
   }
 
+  async readTextWithSha(
+    path: string,
+    ref?: string,
+  ): Promise<{ content: string; sha: string } | null> {
+    try {
+      const request = ref ? { ...this.params, path, ref } : { ...this.params, path };
+      const response = await this.octokit.repos.getContent(request);
+      if (
+        Array.isArray(response.data) ||
+        response.data.type !== "file" ||
+        !("content" in response.data)
+      ) {
+        throw new Error(`${path} is not a file.`);
+      }
+      return {
+        content: Buffer.from(response.data.content.replace(/\n/g, ""), "base64").toString("utf8"),
+        sha: response.data.sha,
+      };
+    } catch (error: unknown) {
+      if (typeof error === "object" && error && "status" in error && error.status === 404)
+        return null;
+      throw error;
+    }
+  }
+
   async ensureLabel(name: string, color: string, description: string): Promise<void> {
     try {
       await this.octokit.issues.getLabel({ ...this.params, name });
@@ -57,67 +82,6 @@ export class GitHubGateway {
           throw createError;
       }
     }
-  }
-
-  async createOrReuseSigningIssue(input: {
-    login: string;
-    githubId: number;
-    prNumber: number;
-    version: string;
-    agreement: string;
-    agreementLabel: string;
-    pendingLabel: string;
-  }): Promise<{ number: number; nodeId: string; url: string }> {
-    await this.ensureLabel(input.agreementLabel, "0e8a16", "Contributor agreement workflow");
-    await this.ensureLabel(input.pendingLabel, "fbca04", "Contributor agreement awaiting action");
-    const marker = this.issueMarker(input);
-    const issues = await this.octokit.paginate(this.octokit.issues.listForRepo, {
-      ...this.params,
-      state: "open",
-      labels: `${input.agreementLabel},${input.pendingLabel}`,
-      per_page: 100,
-    });
-    const existing = issues.find(
-      (issue) => !("pull_request" in issue) && issue.body?.includes(marker),
-    );
-    if (existing)
-      return { number: existing.number, nodeId: existing.node_id, url: existing.html_url };
-    const body = [
-      marker,
-      "",
-      "# Contributor License Agreement",
-      "",
-      `For **@${input.login}** and contribution PR **#${input.prNumber}**.`,
-      "",
-      `Agreement version: **${input.version}**`,
-      "",
-      "---",
-      "",
-      input.agreement.trim(),
-      "",
-      "---",
-      "",
-      "- [ ] I have read and agree to the Contributor License Agreement.",
-      "",
-      "- [ ] I am submitting this agreement for my own authenticated GitHub account.",
-      "",
-    ].join("\n");
-    const issue = await this.octokit.issues.create({
-      ...this.params,
-      title: `Contributor License Agreement for @${input.login}`,
-      body,
-      labels: [input.agreementLabel, input.pendingLabel],
-    });
-    return { number: issue.data.number, nodeId: issue.data.node_id, url: issue.data.html_url };
-  }
-
-  issueMarker(input: {
-    login: string;
-    githubId: number;
-    prNumber: number;
-    version: string;
-  }): string {
-    return `<!-- github-cla:${Buffer.from(JSON.stringify({ schemaVersion: 1, contributorLogin: input.login, contributorId: input.githubId, pullRequestNumber: input.prNumber, agreementVersion: input.version }), "utf8").toString("base64url")} -->`;
   }
 
   async setCheck(
@@ -208,9 +172,9 @@ export class GitHubGateway {
   async createAgreementPr(input: {
     branch: string;
     base: string;
-    registryPath: string;
-    registryContent: string;
+    files: Array<{ path: string; content: string }>;
     entry: Record<string, unknown>;
+    registryPath: string;
     label: string;
   }): Promise<{ number: number; nodeId: string; url: string; sha: string }> {
     const existing = await this.octokit.pulls.list({
@@ -219,13 +183,15 @@ export class GitHubGateway {
       head: `${this.repository.owner}:${input.branch}`,
       per_page: 10,
     });
-    if (existing.data[0])
+    if (existing.data[0]) {
       return {
         number: existing.data[0].number,
         nodeId: existing.data[0].node_id,
         url: existing.data[0].html_url,
         sha: existing.data[0].head.sha,
       };
+    }
+
     const baseRef = await this.octokit.git.getRef({ ...this.params, ref: `heads/${input.base}` });
     try {
       await this.octokit.git.createRef({
@@ -234,13 +200,14 @@ export class GitHubGateway {
         sha: baseRef.data.object.sha,
       });
     } catch (error: unknown) {
-      if (!(typeof error === "object" && error && "status" in error && error.status === 422))
+      if (!(typeof error === "object" && error && "status" in error && error.status === 422)) {
         throw error;
+      }
     }
-    const commitSha = await this.commitFile(
+
+    const commitSha = await this.commitFiles(
       input.branch,
-      input.registryPath,
-      input.registryContent,
+      input.files,
       `Record CLA for ${String(input.entry.githubLogin)}`,
     );
     const metadata = Buffer.from(
@@ -252,7 +219,7 @@ export class GitHubGateway {
       title: `Record CLA for @${String(input.entry.githubLogin)}`,
       head: input.branch,
       base: input.base,
-      body: `<!-- github-cla-pr:${metadata} -->\n\nAdds the contributor to \`${input.registryPath}\`.\n\nA maintainer must verify the signing issue before merging.`,
+      body: `<!-- github-cla-pr:${metadata} -->\n\nAdds an immutable agreement record and updates \`${input.registryPath}\`.\n\nA maintainer must verify the source issue before merging.`,
       maintainer_can_modify: true,
     });
     await this.ensureLabel(input.label, "0e8a16", "Contributor agreement pull request");
@@ -269,10 +236,22 @@ export class GitHubGateway {
     };
   }
 
-  private async commitFile(
+  async listOpenPullRequestsByAuthor(
+    login: string,
+  ): Promise<Array<{ number: number; headSha: string }>> {
+    const pullRequests = await this.octokit.paginate(this.octokit.pulls.list, {
+      ...this.params,
+      state: "open",
+      per_page: 100,
+    });
+    return pullRequests
+      .filter((pullRequest) => pullRequest.user?.login.toLowerCase() === login.toLowerCase())
+      .map((pullRequest) => ({ number: pullRequest.number, headSha: pullRequest.head.sha }));
+  }
+
+  private async commitFiles(
     branch: string,
-    path: string,
-    content: string,
+    files: Array<{ path: string; content: string }>,
     message: string,
   ): Promise<string> {
     const ref = await this.octokit.git.getRef({ ...this.params, ref: `heads/${branch}` });
@@ -280,11 +259,25 @@ export class GitHubGateway {
       ...this.params,
       commit_sha: ref.data.object.sha,
     });
-    const blob = await this.octokit.git.createBlob({ ...this.params, content, encoding: "utf-8" });
+    const treeEntries = await Promise.all(
+      files.map(async (file) => {
+        const blob = await this.octokit.git.createBlob({
+          ...this.params,
+          content: file.content,
+          encoding: "utf-8",
+        });
+        return {
+          path: file.path,
+          mode: "100644" as const,
+          type: "blob" as const,
+          sha: blob.data.sha,
+        };
+      }),
+    );
     const tree = await this.octokit.git.createTree({
       ...this.params,
       base_tree: parent.data.tree.sha,
-      tree: [{ path, mode: "100644", type: "blob", sha: blob.data.sha }],
+      tree: treeEntries,
     });
     const commit = await this.octokit.git.createCommit({
       ...this.params,

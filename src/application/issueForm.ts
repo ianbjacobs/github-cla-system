@@ -15,20 +15,3 @@ export function checked(body: string, label: string): boolean {
 export function acceptanceComplete(body: string): boolean {
   return checked(body, ACCEPTANCE) && checked(body, IDENTITY);
 }
-
-export function contributionPrNumber(body: string): number | null {
-  const lines = body.split(/\r?\n/);
-  const index = lines.findIndex(
-    (line) => line.trim().toLowerCase() === "### contribution pull request number",
-  );
-  if (index < 0) return null;
-  for (const line of lines.slice(index + 1)) {
-    const value = line.trim();
-    if (value.startsWith("### ")) break;
-    if (value && value !== "_No response_") {
-      const match = value.match(/(?:\/pull\/|#)?(\d+)/);
-      return match ? Number(match[1]) : null;
-    }
-  }
-  return null;
-}

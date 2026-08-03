@@ -54,7 +54,11 @@ async function dispatchPullRequest(
   if (["opened", "reopened", "synchronize"].includes(payload.action)) {
     if (!pullRequest.user) return "invalid";
     await handlers.contributionPullRequest(github, {
-      contributor: { id: pullRequest.user.id, login: pullRequest.user.login },
+      contributor: {
+        id: pullRequest.user.id,
+        nodeId: pullRequest.user.node_id,
+        login: pullRequest.user.login,
+      },
       number: pullRequest.number,
       headSha: pullRequest.head.sha,
     });
@@ -79,14 +83,16 @@ async function dispatchIssue(
   handlers: WebhookHandlers,
 ): Promise<DispatchResult> {
   const issue = payload.issue;
-  if (issue.pull_request || issue.state !== "open") return "ignored";
+  if (payload.action !== "opened" || issue.pull_request || issue.state !== "open") return "ignored";
+  if (!issue.title.startsWith("[CLA]")) return "ignored";
   if (!issue.user) return "invalid";
 
   await handlers.signingIssue(github, {
     issueNumber: issue.number,
-    author: { id: issue.user.id, login: issue.user.login },
+    author: { id: issue.user.id, nodeId: issue.user.node_id, login: issue.user.login },
     body: issue.body ?? "",
     nodeId: issue.node_id,
+    createdAt: issue.created_at,
   });
   return "handled";
 }

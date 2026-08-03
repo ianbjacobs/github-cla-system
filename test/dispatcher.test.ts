@@ -27,7 +27,7 @@ describe("webhook dispatcher", () => {
         pull_request: {
           number: 7,
           body: null,
-          user: { id: 42, login: "octocat" },
+          user: { id: 42, login: "octocat", node_id: "U_42" },
           head: { sha: "abc123" },
           labels: [],
         },
@@ -53,10 +53,12 @@ describe("webhook dispatcher", () => {
         repository,
         issue: {
           number: 9,
+          title: "[CLA] Contributor agreement",
           node_id: "I_node",
           body: "accepted",
           state: "open",
-          user: { id: 42, login: "octocat" },
+          created_at: "2026-08-03T12:00:00.000Z",
+          user: { id: 42, login: "octocat", node_id: "U_42" },
         },
       },
       injected,
@@ -65,7 +67,12 @@ describe("webhook dispatcher", () => {
     expect(result).toBe("handled");
     expect(injected.signingIssue).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ issueNumber: 9, nodeId: "I_node" }),
+      expect.objectContaining({
+        issueNumber: 9,
+        nodeId: "I_node",
+        createdAt: "2026-08-03T12:00:00.000Z",
+        author: expect.objectContaining({ nodeId: "U_42" }),
+      }),
     );
   });
 

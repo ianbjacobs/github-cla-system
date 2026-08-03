@@ -2,8 +2,14 @@ import { CONFIG_PATH, parseRepositoryConfig } from "../config/repositoryConfig.j
 import type { ClaConfig, Contributor } from "../domain/types.js";
 import { normalizeLogin } from "../domain/validation.js";
 import type { GitHubGateway } from "../infrastructure/github/gateway.js";
-import { acceptanceComplete, contributionPrNumber } from "./issueForm.js";
-import { addAgreement, findAgreement, parseRegistry, serializeRegistry } from "./registry.js";
+import { acceptanceComplete } from "./issueForm.js";
+import {
+  addAgreement,
+  findAgreement,
+  parseRegistry,
+  serializeAgreementRecord,
+  serializeRegistry,
+} from "./registry.js";
 
 async function config(github: GitHubGateway): Promise<ClaConfig> {
   return parseRepositoryConfig(await github.readText(CONFIG_PATH));
@@ -30,87 +36,88 @@ export async function onContributionPullRequest(
     );
     return;
   }
+
   await github.setCheck(
     input.headSha,
     cfg.statusCheckName,
-    "pending",
-    `No merged CLA ${cfg.agreementVersion} exists for GitHub user ID ${input.contributor.id}.`,
+    "failure",
+    `No merged CLA ${cfg.agreementVersion} exists for GitHub user ID ${input.contributor.id}. Open the “Sign Contributor Agreement” issue form, then wait for a maintainer to merge the generated agreement PR.`,
   );
-  const agreement = await github.readText(cfg.agreementTemplatePath);
-  if (!agreement) throw new Error(`Agreement template ${cfg.agreementTemplatePath} is missing.`);
-  await github.createOrReuseSigningIssue({
-    login: normalizeLogin(input.contributor.login),
-    githubId: input.contributor.id,
-    prNumber: input.number,
-    version: cfg.agreementVersion,
-    agreement,
-    agreementLabel: cfg.labels.agreement,
-    pendingLabel: cfg.labels.pending,
-  });
 }
 
 export async function onSigningIssue(
   github: GitHubGateway,
-  input: { issueNumber: number; author: Contributor; body: string; nodeId: string },
+  input: {
+    issueNumber: number;
+    author: Contributor;
+    body: string;
+    nodeId: string;
+    createdAt: string;
+  },
 ): Promise<void> {
-  if (!acceptanceComplete(input.body)) return;
   const cfg = await config(github);
-  const prNumber = contributionPrNumber(input.body) ?? extractMarkerPr(input.body);
-  if (!prNumber)
-    throw new Error("The signing issue does not identify a contribution pull request.");
-  const pr = await github.getPull(prNumber);
-  if (
-    !pr.user ||
-    pr.user.id !== input.author.id ||
-    pr.user.login.toLowerCase() !== input.author.login.toLowerCase()
-  )
-    throw new Error("The contribution PR author does not match the signing issue author.");
-  const registry = parseRegistry(await github.readText(cfg.agreementRegistryPath));
-  if (findAgreement(registry, input.author.id, cfg.agreementVersion, github.fullName())) {
+
+  if (!acceptanceComplete(input.body)) {
     await github.comment(
       input.issueNumber,
-      "✅ Your CLA is already recorded in the merged registry.",
-    );
-    await github.closeIssue(input.issueNumber, [cfg.labels.agreement]);
-    await github.setCheck(
-      pr.head.sha,
-      cfg.statusCheckName,
-      "success",
-      "Contributor has a merged CLA record.",
+      "The required agreement checkboxes were not both selected. No agreement pull request was created.",
     );
     return;
   }
+
+  const agreement = await github.readTextWithSha(cfg.agreementTemplatePath);
+  if (!agreement) throw new Error(`Agreement template ${cfg.agreementTemplatePath} is missing.`);
+
+  const registry = parseRegistry(await github.readText(cfg.agreementRegistryPath));
+  const existing = findAgreement(
+    registry,
+    input.author.id,
+    cfg.agreementVersion,
+    github.fullName(),
+  );
+  if (existing) {
+    await github.comment(
+      input.issueNumber,
+      `✅ CLA ${existing.agreementVersion} is already recorded for GitHub user ID ${existing.githubId}.`,
+    );
+    await github.closeIssue(input.issueNumber, [cfg.labels.agreement]);
+    return;
+  }
+
+  const safeVersion = cfg.agreementVersion.replace(/[^a-z0-9._-]+/gi, "-");
+  const recordPath = `${cfg.agreementRecordsDirectory}/${input.author.id}/${safeVersion}.yaml`;
   const entry = {
     githubId: input.author.id,
+    githubNodeId: input.author.nodeId,
     githubLogin: normalizeLogin(input.author.login),
     agreementVersion: cfg.agreementVersion,
-    signedAt: new Date().toISOString(),
+    agreementPath: cfg.agreementTemplatePath,
+    agreementCommit: agreement.sha,
+    signedAt: input.createdAt,
     repository: github.fullName(),
     issueNumber: input.issueNumber,
     issueNodeId: input.nodeId,
-    contributionPullRequestNumber: prNumber,
+    recordPath,
   };
-  const updated = addAgreement(registry, entry);
-  const branch = `cla/${input.author.id}/${input.issueNumber}/${cfg.agreementVersion.replace(/[^a-z0-9._-]+/gi, "-")}`;
+  const updatedRegistry = addAgreement(registry, entry);
+  const branch = `cla/${input.author.id}/${input.issueNumber}/${safeVersion}`;
   const agreementPr = await github.createAgreementPr({
     branch,
     base: await github.defaultBranch(),
-    registryPath: cfg.agreementRegistryPath,
-    registryContent: serializeRegistry(updated),
+    files: [
+      { path: recordPath, content: serializeAgreementRecord(entry) },
+      { path: cfg.agreementRegistryPath, content: serializeRegistry(updatedRegistry) },
+    ],
     entry,
+    registryPath: cfg.agreementRegistryPath,
     label: cfg.labels.agreement,
   });
+
   await github.comment(
     input.issueNumber,
-    `✅ Agreement PR opened: ${agreementPr.url}\n\nA maintainer must merge it before the contribution check passes.`,
+    `✅ Agreement PR opened: ${agreementPr.url}\n\nA maintainer must verify the checked agreement and merge that PR before the agreement becomes authoritative.`,
   );
   await github.closeIssue(input.issueNumber, [cfg.labels.agreement]);
-  await github.setCheck(
-    pr.head.sha,
-    cfg.statusCheckName,
-    "pending",
-    `Agreement PR #${agreementPr.number} awaits maintainer review.`,
-  );
 }
 
 export async function onAgreementPullRequestMerged(
@@ -120,6 +127,7 @@ export async function onAgreementPullRequestMerged(
   if (!input.merged) return;
   const cfg = await config(github);
   if (!input.labels.includes(cfg.labels.agreement)) return;
+
   const metadata = parsePrMetadata(input.body);
   if (!metadata) return;
   const registry = parseRegistry(await github.readText(cfg.agreementRegistryPath));
@@ -132,35 +140,29 @@ export async function onAgreementPullRequestMerged(
   if (
     !entry ||
     entry.issueNodeId !== metadata.issueNodeId ||
-    entry.contributionPullRequestNumber !== metadata.contributionPullRequestNumber
-  )
-    throw new Error("Merged agreement registry entry does not match the Agreement PR metadata.");
-  const contribution = await github.getPull(entry.contributionPullRequestNumber);
-  if (contribution.state === "open")
+    entry.recordPath !== metadata.recordPath ||
+    entry.agreementCommit !== metadata.agreementCommit
+  ) {
+    throw new Error("Merged agreement registry entry does not match Agreement PR metadata.");
+  }
+
+  const openPullRequests = await github.listOpenPullRequestsByAuthor(entry.githubLogin);
+  for (const pullRequest of openPullRequests) {
     await github.setCheck(
-      contribution.head.sha,
+      pullRequest.headSha,
       cfg.statusCheckName,
       "success",
       `Agreement PR #${input.number} merged; CLA ${entry.agreementVersion} is now authoritative.`,
     );
-}
-
-function extractMarkerPr(body: string): number | null {
-  const match = body.match(/<!-- github-cla:([^ ]+) -->/);
-  if (!match?.[1]) return null;
-  try {
-    const value = JSON.parse(Buffer.from(match[1], "base64url").toString("utf8"));
-    return Number.isSafeInteger(value.pullRequestNumber) ? value.pullRequestNumber : null;
-  } catch {
-    return null;
   }
 }
 
 interface AgreementPullRequestMetadata {
   githubId: number;
   agreementVersion: string;
+  agreementCommit: string;
   issueNodeId: string;
-  contributionPullRequestNumber: number;
+  recordPath: string;
 }
 
 function parsePrMetadata(body: string | null): AgreementPullRequestMetadata | null {
@@ -174,16 +176,18 @@ function parsePrMetadata(body: string | null): AgreementPullRequestMetadata | nu
     if (
       typeof candidate.githubId !== "number" ||
       typeof candidate.agreementVersion !== "string" ||
+      typeof candidate.agreementCommit !== "string" ||
       typeof candidate.issueNodeId !== "string" ||
-      typeof candidate.contributionPullRequestNumber !== "number"
+      typeof candidate.recordPath !== "string"
     ) {
       return null;
     }
     return {
       githubId: candidate.githubId,
       agreementVersion: candidate.agreementVersion,
+      agreementCommit: candidate.agreementCommit,
       issueNodeId: candidate.issueNodeId,
-      contributionPullRequestNumber: candidate.contributionPullRequestNumber,
+      recordPath: candidate.recordPath,
     };
   } catch {
     return null;

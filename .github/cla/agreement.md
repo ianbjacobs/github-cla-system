@@ -4,7 +4,8 @@
 >
 > No Contributor License Agreement terms have been provided yet. Repository
 > maintainers must replace the placeholder below with the legal terms approved
-> for this project before enabling the CLA workflow.
+> for this project before enabling the CLA workflow. The Issue Form and this
+> canonical file must contain the same agreement text.
 
 ## Agreement metadata
 
@@ -20,23 +21,20 @@
 
 Submitting the GitHub CLA issue and selecting both required acceptance
 checkboxes constitutes the contributor's electronic acceptance of this
-Agreement.
+Agreement. The authenticated GitHub account used to submit the issue is treated
+as the identity of the signer.
 
-The authenticated GitHub account used to submit the issue is treated as the
-identity of the signer.
-
-GitHub CLA System records:
+The generated Agreement pull request records:
 
 - the immutable GitHub numeric user ID;
+- the GitHub user node ID;
 - the GitHub login at the time of acceptance;
 - the repository;
-- the agreement version;
-- a SHA-256 fingerprint of the agreement text;
-- the signing timestamp;
-- the signing issue number;
-- the signing issue node ID; and
-- the originating contribution pull request number.
+- the agreement version and canonical file path;
+- the GitHub blob SHA of the canonical agreement file;
+- the issue creation timestamp;
+- the signing issue number; and
+- the signing issue node ID.
 
-After a maintainer reviews and merges the generated Agreement pull request,
-this information is stored in `AGREEMENTS.yaml`, the repository's authoritative
-registry of accepted Contributor License Agreements.
+The agreement becomes authoritative only after a maintainer reviews and merges
+the generated Agreement pull request.

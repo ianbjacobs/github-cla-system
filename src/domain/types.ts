@@ -5,18 +5,22 @@ export interface RepositoryRef {
 
 export interface Contributor {
   id: number;
+  nodeId: string;
   login: string;
 }
 
 export interface AgreementEntry {
   githubId: number;
+  githubNodeId: string;
   githubLogin: string;
   agreementVersion: string;
+  agreementPath: string;
+  agreementCommit: string;
   signedAt: string;
   repository: string;
   issueNumber: number;
   issueNodeId: string;
-  contributionPullRequestNumber: number;
+  recordPath: string;
 }
 
 export interface AgreementRegistry {
@@ -28,6 +32,7 @@ export interface ClaConfig {
   agreementVersion: string;
   agreementTemplatePath: string;
   agreementRegistryPath: string;
+  agreementRecordsDirectory: string;
   statusCheckName: string;
   labels: { agreement: string; pending: string };
 }

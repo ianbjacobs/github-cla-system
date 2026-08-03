@@ -27,7 +27,7 @@ describe("webhook router", () => {
         pull_request: {
           number: 7,
           body: null,
-          user: { id: 42, login: "octocat" },
+          user: { id: 42, login: "octocat", node_id: "U_42" },
           head: { sha: "abc123" },
           labels: [],
         },

@@ -1,6 +1,7 @@
 agreementVersion: "1.0"
 agreementTemplatePath: ".github/cla/agreement.md"
 agreementRegistryPath: "AGREEMENTS.yaml"
+agreementRecordsDirectory: "agreements"
 statusCheckName: "Contributor License Agreement"
 labels:
   agreement: "agreement"

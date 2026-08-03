@@ -60,3 +60,7 @@ Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API
 ## License
 
 W3C Software Notice and License. See `LICENSE`.
+
+## Milestone 3 signing workflow
+
+A contributor selects **Sign Contributor Agreement** and submits the repository Issue Form with both required checkboxes selected. The app uses only GitHub-authenticated webhook identity, creates an immutable record under `agreements/<numeric-user-id>/<agreement-version>.yaml`, regenerates `AGREEMENTS.yaml`, opens a PR labeled `agreement`, and closes the source issue with a link to the PR. A maintainer must merge the PR before the contributor is authorized.
