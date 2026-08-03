@@ -1,0 +1,34 @@
+name: Sign Contributor License Agreement
+description: Accept the Contributor License Agreement for a contribution
+title: "[CLA] Contributor agreement"
+labels:
+  - agreement
+  - pending-cla
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Contributor License Agreement
+        Submit this form with the same authenticated GitHub account that opened the contribution pull request.
+  - type: input
+    id: contribution-pr
+    attributes:
+      label: Contribution pull request number
+      description: Enter the number of your contribution pull request.
+      placeholder: "123"
+    validations:
+      required: true
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance
+      options:
+        - label: I have read and agree to the Contributor License Agreement.
+          required: true
+  - type: checkboxes
+    id: identity
+    attributes:
+      label: Identity confirmation
+      options:
+        - label: I am submitting this agreement for my own authenticated GitHub account.
+          required: true

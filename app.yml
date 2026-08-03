@@ -1,0 +1,17 @@
+name: GitHub CLA System
+description: GitHub-native contributor agreement workflow using issues, agreement PRs, checks, and AGREEMENTS.yaml.
+url: https://cla.example.com
+hook_attributes:
+  url: https://cla.example.com/webhooks/github
+  active: true
+request_oauth_on_install: false
+public: false
+default_permissions:
+  checks: write
+  contents: write
+  issues: write
+  metadata: read
+  pull_requests: write
+default_events:
+  - issues
+  - pull_request
