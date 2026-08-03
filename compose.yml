@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./private-key.pem:/run/secrets/github-app-private-key.pem:ro
+    environment:
+      PRIVATE_KEY_PATH: /run/secrets/github-app-private-key.pem

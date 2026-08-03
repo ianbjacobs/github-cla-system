@@ -2,8 +2,8 @@
 
 > **Experimental software**
 >
-> GitHub CLA System is under active development and has not been validated for
-> production use. Review its behavior, security assumptions, and legal workflow
+> GitHub CLA System is under active development and remains a prerelease. It now includes
+> production-oriented runtime controls, but must still be validated against your deployment environment. Review its behavior, security assumptions, and legal workflow
 > before deployment. The included CLA has no legal terms and must be completed.
 
 A framework-independent GitHub App that collects and enforces contributor agreements entirely in GitHub.
@@ -46,6 +46,13 @@ npm run build
 npm start
 ```
 
+## Operations
+
+The service exposes `/health/live`, `/health/ready`, and an optional `/metrics` endpoint.
+It emits structured JSON logs, requires GitHub delivery IDs, deduplicates successful deliveries
+within a bounded process-local cache, and drains HTTP connections during shutdown. See
+[the deployment guide](docs/deployment.md) and [Milestone 6](docs/milestone-6.md).
+
 ## Configuration
 
 Repository settings live in `.github/cla/config.yml`. Replace `.github/cla/agreement.md` and the Issue Form placeholder with legally reviewed, identical agreement text before production use.
@@ -53,6 +60,15 @@ Repository settings live in `.github/cla/config.yml`. Replace `.github/cla/agree
 ## Security model
 
 Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API calls use short-lived GitHub App installation access tokens. The numeric GitHub user ID is authoritative; logins are retained only for readability.
+
+## Container deployment
+
+```bash
+docker build -t github-cla-system:0.6.0-alpha.1 .
+docker compose up --build
+```
+
+Mount the GitHub App private key read-only and terminate TLS before traffic reaches the app.
 
 ## License
 

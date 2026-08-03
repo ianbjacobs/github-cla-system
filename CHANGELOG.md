@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0-alpha.1 - Milestone 6
+
+### Added
+
+- Structured JSON logging with configurable severity.
+- Liveness, readiness, optional Prometheus metrics, and restrictive HTTP response headers.
+- Bounded process-local GitHub delivery deduplication.
+- Graceful SIGINT/SIGTERM shutdown with connection draining and a forced timeout.
+- Configurable webhook body limits with explicit `413` responses.
+- Non-root multi-stage Docker image, Compose example, deployment guide, and container CI build.
+- Tests for delivery-cache expiry, metrics output, health behavior, and duplicate deliveries.
+
+### Changed
+
+- `X-GitHub-Delivery` is now required for webhook requests.
+- Package version advanced to `0.6.0-alpha.1`.
+- `npm start` now points to the compiled `dist/src/server.js` entry point.
+
 ## 0.5.0-alpha.1 RC3
 
 ### Fixed
@@ -36,8 +54,6 @@
 - `npm run check` is now read-only; `npm run format` performs formatting and safe fixes.
 - GitHub App subscriptions now include push events.
 - Documentation now reflects standalone signing and current enforcement behavior.
-
-# Changelog
 
 ## 1.0.0-alpha.2 - Unreleased
 

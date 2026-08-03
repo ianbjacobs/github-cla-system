@@ -6,13 +6,13 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - run: npm install
-      - run: npm run check
+      - run: npm run ci
+      - run: docker build --tag github-cla-system:test .
