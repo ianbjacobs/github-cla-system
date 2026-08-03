@@ -1,0 +1,31 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run ci
+      - run: docker build --tag github-cla-system:${GITHUB_REF_NAME} .
+      - name: Package source
+        run: |
+          mkdir release
+          git archive --format=zip --prefix=github-cla-system-${GITHUB_REF_NAME}/ -o release/github-cla-system-${GITHUB_REF_NAME}.zip HEAD
+          git archive --format=tar.gz --prefix=github-cla-system-${GITHUB_REF_NAME}/ -o release/github-cla-system-${GITHUB_REF_NAME}.tar.gz HEAD
+          (cd release && sha256sum * > SHA256SUMS)
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then prerelease="--prerelease"; fi
+          gh release create "${GITHUB_REF_NAME}" release/* --generate-notes --verify-tag ${prerelease}

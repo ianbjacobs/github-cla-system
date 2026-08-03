@@ -3,7 +3,7 @@
 ## Status
 
 This specification describes the intended v1 workflow. The implementation is
-experimental and is not yet validated for production use.
+a release candidate and still requires live deployment, security, operational, and legal validation before production use.
 
 ## Contribution workflow
 

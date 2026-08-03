@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-rc.1 - Milestone 7
+
+### Added
+
+- Full lifecycle integration test covering unsigned enforcement, signing, generated records, merge validation, and successful re-evaluation.
+- GitHub App installation, troubleshooting, recovery, release, and project-state documentation.
+- Tag-triggered source release archives with SHA-256 checksums.
+- Milestone 7 release-candidate checklist and live smoke-test gate.
+
+### Changed
+
+- Package version advanced to `1.0.0-rc.1`.
+- README, deployment, and security guidance now describe release-candidate requirements.
+- Package description no longer labels the application experimental.
+
 ## 0.6.0-alpha.1 - Milestone 6
 
 ### Added

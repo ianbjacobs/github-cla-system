@@ -1,7 +1,7 @@
 # Security policy
 
-GitHub CLA System is experimental. Do not use it to collect legally significant
-acceptances without an independent security and legal review.
+GitHub CLA System is a release candidate. Do not use it to collect legally significant
+acceptances without an independent security, privacy, operational, and legal review.
 
 Please report suspected vulnerabilities privately to the repository
 maintainers. Do not include secrets, private keys, webhook secrets, or personal

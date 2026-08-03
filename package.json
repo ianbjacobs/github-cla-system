@@ -1,9 +1,9 @@
 {
   "name": "github-cla-system",
-  "version": "0.6.0-alpha.1",
+  "version": "1.0.0-rc.1",
   "private": true,
   "type": "module",
-  "description": "Experimental GitHub-native contributor agreement workflow implemented as a framework-independent GitHub App.",
+  "description": "GitHub-native contributor agreement workflow implemented as a framework-independent GitHub App.",
   "engines": {
     "node": ">=22 <23"
   },

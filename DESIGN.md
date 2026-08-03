@@ -1,6 +1,6 @@
 # Design
 
-GitHub CLA System is an experimental GitHub App that keeps contributor
+GitHub CLA System is a release-candidate GitHub App that keeps contributor
 agreement policy and records in the repository.
 
 ## Core decisions
@@ -15,7 +15,7 @@ agreement policy and records in the repository.
 - Agreement records identify both a human-readable version and a SHA-256
   fingerprint of the exact agreement text.
 
-The project is experimental and must be reviewed before production use.
+The release candidate must complete live, security, operational, and legal review before production use.
 
 ## Milestone 2: webhook boundary
 

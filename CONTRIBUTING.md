@@ -1,6 +1,6 @@
 # Contributing
 
-This project is experimental. Before submitting a change:
+This project is in release-candidate validation. Before submitting a change:
 
 1. Use Node.js 22.
 2. Run `npm run check`.

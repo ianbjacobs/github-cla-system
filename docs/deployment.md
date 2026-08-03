@@ -11,12 +11,12 @@ Never commit `.env` or a private key. Rotate the webhook secret and private key 
 ## Container
 
 ```bash
-docker build -t github-cla-system:0.6.0-alpha.1 .
+docker build -t github-cla-system:1.0.0-rc.1 .
 docker run --rm -p 3000:3000 \
   --env-file .env \
   --mount type=bind,src="$PWD/private-key.pem",dst=/run/secrets/github-app.pem,readonly \
   -e PRIVATE_KEY_PATH=/run/secrets/github-app.pem \
-  github-cla-system:0.6.0-alpha.1
+  github-cla-system:1.0.0-rc.1
 ```
 
 Configure the platform to use:

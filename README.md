@@ -1,10 +1,10 @@
 # GitHub CLA System
 
-> **Experimental software**
+> **Release candidate**
 >
-> GitHub CLA System is under active development and remains a prerelease. It now includes
-> production-oriented runtime controls, but must still be validated against your deployment environment. Review its behavior, security assumptions, and legal workflow
-> before deployment. The included CLA has no legal terms and must be completed.
+> `v1.0.0-rc.1` implements the planned workflow and production runtime, but still requires a live
+> GitHub smoke test, deployment review, security review, and legal review before production use.
+> The included CLA has no legal terms and must be replaced.
 
 A framework-independent GitHub App that collects and enforces contributor agreements entirely in GitHub.
 
@@ -50,8 +50,8 @@ npm start
 
 The service exposes `/health/live`, `/health/ready`, and an optional `/metrics` endpoint.
 It emits structured JSON logs, requires GitHub delivery IDs, deduplicates successful deliveries
-within a bounded process-local cache, and drains HTTP connections during shutdown. See
-[the deployment guide](docs/deployment.md) and [Milestone 6](docs/milestone-6.md).
+within a bounded process-local cache, and drains HTTP connections during shutdown. See [the deployment guide](docs/deployment.md), [installation guide](docs/installation.md), and
+[troubleshooting guide](docs/troubleshooting.md).
 
 ## Configuration
 
@@ -64,11 +64,18 @@ Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API
 ## Container deployment
 
 ```bash
-docker build -t github-cla-system:0.6.0-alpha.1 .
+docker build -t github-cla-system:1.0.0-rc.1 .
 docker compose up --build
 ```
 
 Mount the GitHub App private key read-only and terminate TLS before traffic reaches the app.
+
+## Installation and release
+
+Use the [GitHub App installation guide](docs/installation.md) for permissions, event subscriptions,
+repository setup, branch protection, and the required live smoke test. Release procedures are in
+[docs/release.md](docs/release.md), and the exact release-candidate scope is recorded in
+[docs/project-state.md](docs/project-state.md).
 
 ## License
 
