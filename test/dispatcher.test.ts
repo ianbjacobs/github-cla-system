@@ -11,6 +11,7 @@ function handlers(): WebhookHandlers {
     contributionPullRequest: vi.fn().mockResolvedValue(undefined),
     agreementPullRequestMerged: vi.fn().mockResolvedValue(undefined),
     signingIssue: vi.fn().mockResolvedValue(undefined),
+    defaultBranchPush: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -40,6 +41,88 @@ describe("webhook dispatcher", () => {
       expect.anything(),
       expect.objectContaining({ number: 7, headSha: "abc123" }),
     );
+  });
+
+  it("ignores generated agreement pull requests", async () => {
+    const injected = handlers();
+    const result = await dispatchWebhook(
+      octokit,
+      "pull_request",
+      {
+        action: "opened",
+        installation,
+        repository,
+        pull_request: {
+          number: 8,
+          body: null,
+          user: { id: 42, login: "octocat", node_id: "U_42" },
+          head: { sha: "agreement123" },
+          labels: [{ name: "agreement" }],
+        },
+      },
+      injected,
+    );
+
+    expect(result).toBe("ignored");
+    expect(injected.contributionPullRequest).not.toHaveBeenCalled();
+  });
+
+  it("ignores generated agreement pull requests identified by metadata", async () => {
+    const injected = handlers();
+    const result = await dispatchWebhook(
+      octokit,
+      "pull_request",
+      {
+        action: "synchronize",
+        installation,
+        repository,
+        pull_request: {
+          number: 8,
+          body: "<!-- github-cla-pr:eyJnaXRodWJJZCI6NDJ9 -->",
+          user: { id: 42, login: "octocat", node_id: "U_42" },
+          head: { sha: "agreement456" },
+          labels: [],
+        },
+      },
+      injected,
+    );
+
+    expect(result).toBe("ignored");
+    expect(injected.contributionPullRequest).not.toHaveBeenCalled();
+  });
+
+  it("re-evaluates pull requests after a default-branch push", async () => {
+    const injected = handlers();
+    const result = await dispatchWebhook(
+      octokit,
+      "push",
+      {
+        installation,
+        repository: { ...repository, default_branch: "main" },
+        ref: "refs/heads/main",
+      },
+      injected,
+    );
+
+    expect(result).toBe("handled");
+    expect(injected.defaultBranchPush).toHaveBeenCalledOnce();
+  });
+
+  it("ignores pushes to non-default branches", async () => {
+    const injected = handlers();
+    const result = await dispatchWebhook(
+      octokit,
+      "push",
+      {
+        installation,
+        repository: { ...repository, default_branch: "main" },
+        ref: "refs/heads/feature",
+      },
+      injected,
+    );
+
+    expect(result).toBe("ignored");
+    expect(injected.defaultBranchPush).not.toHaveBeenCalled();
   });
 
   it("routes an open signing issue and retains the issue node id", async () => {

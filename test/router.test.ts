@@ -7,6 +7,7 @@ function handlers(): WebhookHandlers {
     contributionPullRequest: vi.fn(async () => undefined),
     agreementPullRequestMerged: vi.fn(async () => undefined),
     signingIssue: vi.fn(async () => undefined),
+    defaultBranchPush: vi.fn(async () => undefined),
   };
 }
 
@@ -38,7 +39,7 @@ describe("webhook router", () => {
     expect(injected.contributionPullRequest).toHaveBeenCalledOnce();
   });
 
-  it("ignores unsupported events", async () => {
-    expect(await routeWebhook(octokit, "push", {}, handlers())).toBe("ignored");
+  it("rejects malformed payloads for supported events", async () => {
+    expect(await routeWebhook(octokit, "push", {}, handlers())).toBe("invalid");
   });
 });

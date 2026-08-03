@@ -41,9 +41,16 @@ export const issuesEventSchema = z.object({
   }),
 });
 
+export const pushEventSchema = z.object({
+  installation: z.object({ id: z.number().int().positive() }),
+  repository: repositorySchema.extend({ default_branch: z.string().min(1) }),
+  ref: z.string().min(1),
+});
+
 export const supportedEventSchema = z.discriminatedUnion("event", [
   z.object({ event: z.literal("pull_request"), payload: pullRequestEventSchema }),
   z.object({ event: z.literal("issues"), payload: issuesEventSchema }),
+  z.object({ event: z.literal("push"), payload: pushEventSchema }),
 ]);
 
 export type PullRequestEvent = z.infer<typeof pullRequestEventSchema>;
@@ -51,7 +58,7 @@ export type IssuesEvent = z.infer<typeof issuesEventSchema>;
 export type SupportedEvent = z.infer<typeof supportedEventSchema>;
 
 export function parseSupportedEvent(event: string, payload: unknown): SupportedEvent | null {
-  if (event !== "pull_request" && event !== "issues") return null;
+  if (event !== "pull_request" && event !== "issues" && event !== "push") return null;
   const result = supportedEventSchema.safeParse({ event, payload });
   return result.success ? result.data : null;
 }

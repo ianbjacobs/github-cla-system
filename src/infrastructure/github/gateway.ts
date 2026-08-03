@@ -219,7 +219,13 @@ export class GitHubGateway {
       title: `Record CLA for @${String(input.entry.githubLogin)}`,
       head: input.branch,
       base: input.base,
-      body: `<!-- github-cla-pr:${metadata} -->\n\nAdds an immutable agreement record and updates \`${input.registryPath}\`.\n\nA maintainer must verify the source issue before merging.`,
+      body: [
+        `<!-- github-cla-pr:${metadata} -->`,
+        "",
+        `Adds an immutable agreement record and updates \`${input.registryPath}\`.`,
+        "",
+        "A maintainer must verify the source issue before merging.",
+      ].join("\n"),
       maintainer_can_modify: true,
     });
     await this.ensureLabel(input.label, "0e8a16", "Contributor agreement pull request");
@@ -236,17 +242,42 @@ export class GitHubGateway {
     };
   }
 
-  async listOpenPullRequestsByAuthor(
-    login: string,
-  ): Promise<Array<{ number: number; headSha: string }>> {
+  async listOpenPullRequests(): Promise<
+    Array<{
+      number: number;
+      headSha: string;
+      labels: string[];
+      contributor: { id: number; nodeId: string; login: string } | null;
+    }>
+  > {
     const pullRequests = await this.octokit.paginate(this.octokit.pulls.list, {
       ...this.params,
       state: "open",
       per_page: 100,
     });
+    return pullRequests.map((pullRequest) => ({
+      number: pullRequest.number,
+      headSha: pullRequest.head.sha,
+      labels: pullRequest.labels.flatMap((label) =>
+        typeof label.name === "string" && label.name.length > 0 ? [label.name] : [],
+      ),
+      contributor: pullRequest.user
+        ? {
+            id: pullRequest.user.id,
+            nodeId: pullRequest.user.node_id,
+            login: pullRequest.user.login,
+          }
+        : null,
+    }));
+  }
+
+  async listOpenPullRequestsByAuthor(
+    login: string,
+  ): Promise<Array<{ number: number; headSha: string }>> {
+    const pullRequests = await this.listOpenPullRequests();
     return pullRequests
-      .filter((pullRequest) => pullRequest.user?.login.toLowerCase() === login.toLowerCase())
-      .map((pullRequest) => ({ number: pullRequest.number, headSha: pullRequest.head.sha }));
+      .filter((pullRequest) => pullRequest.contributor?.login.toLowerCase() === login.toLowerCase())
+      .map((pullRequest) => ({ number: pullRequest.number, headSha: pullRequest.headSha }));
   }
 
   private async commitFiles(

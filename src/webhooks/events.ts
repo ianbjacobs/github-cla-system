@@ -47,11 +47,19 @@ export const issuesWebhookSchema = z.object({
 
 export type PullRequestWebhook = z.infer<typeof pullRequestWebhookSchema>;
 export type IssuesWebhook = z.infer<typeof issuesWebhookSchema>;
-export type SupportedWebhook = PullRequestWebhook | IssuesWebhook;
+export const pushWebhookSchema = z.object({
+  installation: installationSchema,
+  repository: repositorySchema.extend({ default_branch: z.string().min(1) }),
+  ref: z.string().min(1),
+});
+
+export type PushWebhook = z.infer<typeof pushWebhookSchema>;
+export type SupportedWebhook = PullRequestWebhook | IssuesWebhook | PushWebhook;
 
 export type ParsedWebhook =
   | { kind: "pull_request"; payload: PullRequestWebhook }
-  | { kind: "issues"; payload: IssuesWebhook };
+  | { kind: "issues"; payload: IssuesWebhook }
+  | { kind: "push"; payload: PushWebhook };
 
 export function parseSupportedWebhook(event: string, payload: unknown): ParsedWebhook | null {
   if (event === "pull_request") {
@@ -62,6 +70,11 @@ export function parseSupportedWebhook(event: string, payload: unknown): ParsedWe
   if (event === "issues") {
     const result = issuesWebhookSchema.safeParse(payload);
     return result.success ? { kind: "issues", payload: result.data } : null;
+  }
+
+  if (event === "push") {
+    const result = pushWebhookSchema.safeParse(payload);
+    return result.success ? { kind: "push", payload: result.data } : null;
   }
 
   return null;

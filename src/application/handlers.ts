@@ -120,6 +120,19 @@ export async function onSigningIssue(
   await github.closeIssue(input.issueNumber, [cfg.labels.agreement]);
 }
 
+export async function onDefaultBranchPush(github: GitHubGateway): Promise<void> {
+  const cfg = await config(github);
+  const pullRequests = await github.listOpenPullRequests();
+  for (const pullRequest of pullRequests) {
+    if (!pullRequest.contributor || pullRequest.labels.includes(cfg.labels.agreement)) continue;
+    await onContributionPullRequest(github, {
+      contributor: pullRequest.contributor,
+      number: pullRequest.number,
+      headSha: pullRequest.headSha,
+    });
+  }
+}
+
 export async function onAgreementPullRequestMerged(
   github: GitHubGateway,
   input: { number: number; body: string | null; labels: string[]; merged: boolean },

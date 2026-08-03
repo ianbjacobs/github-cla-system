@@ -21,6 +21,15 @@ describe("webhook event parsing", () => {
     expect(parsed?.kind).toBe("pull_request");
   });
 
+  it("parses push events", () => {
+    const parsed = parseSupportedWebhook("push", {
+      installation,
+      repository: { ...repository, default_branch: "main" },
+      ref: "refs/heads/main",
+    });
+    expect(parsed?.kind).toBe("push");
+  });
+
   it("rejects malformed supported events and ignores unknown events", () => {
     expect(parseSupportedWebhook("issues", { action: "opened" })).toBeNull();
     expect(parseSupportedWebhook("ping", {})).toBeNull();

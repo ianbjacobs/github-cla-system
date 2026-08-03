@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.4.0-alpha.1 RC3
+
+### Fixed
+
+- Exempt generated Agreement PRs from contribution enforcement when identified by either the `agreement` label or the generated PR metadata marker.
+- Corrected the router test contract: malformed payloads for supported webhook events return `invalid`, while unsupported event names return `ignored`.
+
+## 0.4.0-alpha.1 RC2
+
+### Fixed
+
+- Applied Biome formatting across Milestone 4 source and test files.
+- Organized imports and exports so `npm run check` remains read-only and clean.
+- No functional behavior changed from Milestone 4 RC1.
+
+## 0.4.0-alpha.1 - Milestone 4
+
+### Added
+
+- CLA Check Run enforcement for opened, reopened, and synchronized contribution pull requests.
+- Default-branch push handling that re-evaluates all open contribution pull requests.
+- Push webhook validation and dispatch tests.
+- Exemption for generated Agreement PRs, preventing circular CLA enforcement.
+
+### Changed
+
+- `npm run check` is now read-only; `npm run format` performs formatting and safe fixes.
+- GitHub App subscriptions now include push events.
+- Documentation now reflects standalone signing and current enforcement behavior.
+
+# Changelog
+
 ## 1.0.0-alpha.2 - Unreleased
 
 ### Added

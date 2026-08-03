@@ -6,24 +6,26 @@
 > production use. Review its behavior, security assumptions, and legal workflow
 > before deployment. The included CLA has no legal terms and must be completed.
 
-A framework-independent GitHub App that keeps contributor agreement collection and enforcement entirely in GitHub.
+A framework-independent GitHub App that collects and enforces contributor agreements entirely in GitHub.
 
 ## Workflow
 
-1. A contribution pull request is opened.
-2. The app checks the author's immutable GitHub numeric user ID in `AGREEMENTS.yaml`.
-3. If no current agreement exists, the app creates or reuses a signing issue and leaves the CLA Check Run pending.
-4. The contributor checks both required boxes using the same authenticated account that opened the contribution PR.
-5. The app creates a dedicated branch, updates `AGREEMENTS.yaml`, opens a PR, labels it `agreement`, comments on the signing issue, and closes the issue.
-6. A maintainer verifies the issue and merges the Agreement PR.
-7. The app validates the merged registry entry and marks the original contribution PR's CLA check successful.
+1. A contributor selects **Sign Contributor Agreement** and submits the repository Issue Form.
+2. The app validates both required acknowledgements and uses the authenticated GitHub webhook identity.
+3. The app creates a branch containing an immutable record under `agreements/` and an updated `AGREEMENTS.yaml`.
+4. The app opens a pull request labeled `agreement` and closes the source issue with a link to it.
+5. A maintainer verifies the issue and merges the Agreement PR.
+6. Contribution pull requests pass only when the author's numeric GitHub user ID has a current, repository-scoped entry in `AGREEMENTS.yaml`.
+7. Checks are re-evaluated when contribution PRs open, reopen, or synchronize; when an Agreement PR merges; and when the default branch changes.
+
+Generated Agreement PRs are excluded from CLA enforcement to avoid a circular dependency.
 
 ## Requirements
 
 - Node.js 22.x
 - A GitHub App private key
 - GitHub App permissions: Checks, Contents, Issues, and Pull requests (read/write); Metadata (read)
-- Webhook events: Issues and Pull request
+- Webhook events: Issues, Pull request, and Push
 
 ## Local setup
 
@@ -33,25 +35,20 @@ npm install
 npm run dev
 ```
 
-Set the GitHub App webhook URL to:
-
-```text
-https://your-host.example/webhooks/github
-```
-
-Set the same webhook secret in GitHub and `WEBHOOK_SECRET`.
+Set the GitHub App webhook URL to `https://your-host.example/webhooks/github` and use the same webhook secret in GitHub and `WEBHOOK_SECRET`.
 
 ## Build and test
 
 ```bash
-npm run check
+npm run format  # writes formatting and safe import fixes
+npm run check   # read-only validation, type checking, and tests
 npm run build
 npm start
 ```
 
 ## Configuration
 
-Repository settings live in `.github/cla/config.yml`. The sample agreement is development scaffolding, not legal advice; replace it with legally reviewed text before production.
+Repository settings live in `.github/cla/config.yml`. Replace `.github/cla/agreement.md` and the Issue Form placeholder with legally reviewed, identical agreement text before production use.
 
 ## Security model
 
@@ -60,7 +57,3 @@ Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API
 ## License
 
 W3C Software Notice and License. See `LICENSE`.
-
-## Milestone 3 signing workflow
-
-A contributor selects **Sign Contributor Agreement** and submits the repository Issue Form with both required checkboxes selected. The app uses only GitHub-authenticated webhook identity, creates an immutable record under `agreements/<numeric-user-id>/<agreement-version>.yaml`, regenerates `AGREEMENTS.yaml`, opens a PR labeled `agreement`, and closes the source issue with a link to the PR. A maintainer must merge the PR before the contributor is authorized.

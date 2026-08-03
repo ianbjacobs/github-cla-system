@@ -2,22 +2,25 @@ import type { Octokit } from "@octokit/rest";
 import {
   onAgreementPullRequestMerged,
   onContributionPullRequest,
+  onDefaultBranchPush,
   onSigningIssue,
 } from "../application/handlers.js";
 import { GitHubGateway } from "../infrastructure/github/gateway.js";
-import type { IssuesWebhook, PullRequestWebhook } from "./events.js";
+import type { IssuesWebhook, PullRequestWebhook, PushWebhook } from "./events.js";
 import { parseSupportedWebhook } from "./events.js";
 
 export interface WebhookHandlers {
   contributionPullRequest: typeof onContributionPullRequest;
   agreementPullRequestMerged: typeof onAgreementPullRequestMerged;
   signingIssue: typeof onSigningIssue;
+  defaultBranchPush: typeof onDefaultBranchPush;
 }
 
 const defaultHandlers: WebhookHandlers = {
   contributionPullRequest: onContributionPullRequest,
   agreementPullRequestMerged: onAgreementPullRequestMerged,
   signingIssue: onSigningIssue,
+  defaultBranchPush: onDefaultBranchPush,
 };
 
 export type DispatchResult = "handled" | "ignored" | "invalid";
@@ -29,7 +32,10 @@ export async function dispatchWebhook(
   handlers: WebhookHandlers = defaultHandlers,
 ): Promise<DispatchResult> {
   const parsed = parseSupportedWebhook(event, payload);
-  if (!parsed) return event === "issues" || event === "pull_request" ? "invalid" : "ignored";
+  if (!parsed)
+    return event === "issues" || event === "pull_request" || event === "push"
+      ? "invalid"
+      : "ignored";
 
   const repository = parsed.payload.repository;
   const github = new GitHubGateway(octokit, {
@@ -39,6 +45,10 @@ export async function dispatchWebhook(
 
   if (parsed.kind === "pull_request") {
     return dispatchPullRequest(github, parsed.payload, handlers);
+  }
+
+  if (parsed.kind === "push") {
+    return dispatchPush(github, parsed.payload, handlers);
   }
 
   return dispatchIssue(github, parsed.payload, handlers);
@@ -52,6 +62,14 @@ async function dispatchPullRequest(
   const pullRequest = payload.pull_request;
 
   if (["opened", "reopened", "synchronize"].includes(payload.action)) {
+    const labelNames = pullRequest.labels.flatMap((label) => {
+      const name = typeof label === "string" ? label : label.name;
+      return typeof name === "string" && name.length > 0 ? [name] : [];
+    });
+    const generatedAgreementPullRequest =
+      labelNames.includes("agreement") ||
+      pullRequest.body?.includes("<!-- github-cla-pr:") === true;
+    if (generatedAgreementPullRequest) return "ignored";
     if (!pullRequest.user) return "invalid";
     await handlers.contributionPullRequest(github, {
       contributor: {
@@ -94,5 +112,15 @@ async function dispatchIssue(
     nodeId: issue.node_id,
     createdAt: issue.created_at,
   });
+  return "handled";
+}
+
+async function dispatchPush(
+  github: GitHubGateway,
+  payload: PushWebhook,
+  handlers: WebhookHandlers,
+): Promise<DispatchResult> {
+  if (payload.ref !== `refs/heads/${payload.repository.default_branch}`) return "ignored";
+  await handlers.defaultBranchPush(github);
   return "handled";
 }
