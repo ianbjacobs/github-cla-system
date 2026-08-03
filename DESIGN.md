@@ -16,3 +16,10 @@ agreement policy and records in the repository.
   fingerprint of the exact agreement text.
 
 The project is experimental and must be reviewed before production use.
+
+## Milestone 2: webhook boundary
+
+Raw webhook JSON is treated as untrusted input. Event-specific Zod schemas validate
+supported payloads before application handlers receive them. The dispatcher exposes
+explicit `handled`, `ignored`, and `invalid` outcomes, and accepts injected handlers so
+routing can be tested without network calls.

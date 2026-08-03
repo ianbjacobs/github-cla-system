@@ -20,7 +20,7 @@ A framework-independent GitHub App that keeps contributor agreement collection a
 
 ## Requirements
 
-- Node.js 24 or later
+- Node.js 22.x
 - A GitHub App private key
 - GitHub App permissions: Checks, Contents, Issues, and Pull requests (read/write); Metadata (read)
 - Webhook events: Issues and Pull request
@@ -59,4 +59,4 @@ Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API
 
 ## License
 
-MIT. See `LICENSE`.
+W3C Software Notice and License. See `LICENSE`.
