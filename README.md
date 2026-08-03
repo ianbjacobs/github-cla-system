@@ -57,3 +57,9 @@ Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API
 ## License
 
 W3C Software Notice and License. See `LICENSE`.
+
+## Organization-wide policies
+
+Set `agreementScope: organization` and `policyRepository: owner/repository` in `.github/cla/config.yml` to keep the canonical agreement and registry in a shared repository. See [the configuration reference](docs/configuration.md).
+
+Agreement versions are exact: changing `agreementVersion` requires contributors to accept the new version.

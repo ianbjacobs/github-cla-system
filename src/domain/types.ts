@@ -9,6 +9,8 @@ export interface Contributor {
   login: string;
 }
 
+export type AgreementScope = "repository" | "organization";
+
 export interface AgreementEntry {
   githubId: number;
   githubNodeId: string;
@@ -18,6 +20,8 @@ export interface AgreementEntry {
   agreementCommit: string;
   signedAt: string;
   repository: string;
+  scope: AgreementScope;
+  scopeOwner: string;
   issueNumber: number;
   issueNodeId: string;
   recordPath: string;
@@ -29,10 +33,13 @@ export interface AgreementRegistry {
 }
 
 export interface ClaConfig {
+  schemaVersion: 1;
   agreementVersion: string;
   agreementTemplatePath: string;
   agreementRegistryPath: string;
   agreementRecordsDirectory: string;
+  agreementScope: AgreementScope;
+  policyRepository?: RepositoryRef;
   statusCheckName: string;
   labels: { agreement: string; pending: string };
 }

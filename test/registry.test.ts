@@ -6,8 +6,9 @@ import {
   serializeAgreementRecord,
   serializeRegistry,
 } from "../src/application/registry.js";
+import type { AgreementEntry } from "../src/domain/types.js";
 
-const entry = {
+const entry: AgreementEntry = {
   githubId: 42,
   githubNodeId: "U_42",
   githubLogin: "Octocat",
@@ -16,6 +17,8 @@ const entry = {
   agreementCommit: "0123456789abcdef",
   signedAt: "2026-08-03T12:00:00.000Z",
   repository: "owner/repo",
+  scope: "repository",
+  scopeOwner: "owner",
   issueNumber: 7,
   issueNodeId: "I_abc",
   recordPath: "agreements/42/1.0.yaml",
@@ -30,6 +33,28 @@ describe("agreement registry", () => {
       githubLogin: "octocat",
       issueNodeId: "I_abc",
     });
+  });
+
+  it("normalizes legacy repository records without explicit scope fields", () => {
+    const legacy = serializeRegistry({ schemaVersion: 1, agreements: [entry] })
+      .replace(/^\s*scope: repository\n/m, "")
+      .replace(/^\s*scopeOwner: owner\n/m, "");
+    expect(parseRegistry(legacy).agreements[0]).toMatchObject({
+      scope: "repository",
+      scopeOwner: "owner",
+    });
+  });
+
+  it("accepts an organization-scoped agreement across repositories in the same owner", () => {
+    const organizationEntry = {
+      ...entry,
+      scope: "organization" as const,
+      scopeOwner: "owner",
+      repository: "owner/source-repo",
+    };
+    const registry = addAgreement(parseRegistry(null), organizationEntry);
+    expect(findAgreement(registry, 42, "1.0", "owner/another-repo")).toBeDefined();
+    expect(findAgreement(registry, 42, "1.0", "different/repo")).toBeUndefined();
   });
 
   it("serializes an immutable per-contributor record", () => {

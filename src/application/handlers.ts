@@ -1,5 +1,5 @@
 import { CONFIG_PATH, parseRepositoryConfig } from "../config/repositoryConfig.js";
-import type { ClaConfig, Contributor } from "../domain/types.js";
+import type { AgreementEntry, ClaConfig, Contributor } from "../domain/types.js";
 import { normalizeLogin } from "../domain/validation.js";
 import type { GitHubGateway } from "../infrastructure/github/gateway.js";
 import { acceptanceComplete } from "./issueForm.js";
@@ -15,12 +15,17 @@ async function config(github: GitHubGateway): Promise<ClaConfig> {
   return parseRepositoryConfig(await github.readText(CONFIG_PATH));
 }
 
+function policyGateway(github: GitHubGateway, cfg: ClaConfig): GitHubGateway {
+  return cfg.policyRepository ? github.forRepository(cfg.policyRepository) : github;
+}
+
 export async function onContributionPullRequest(
   github: GitHubGateway,
   input: { contributor: Contributor; number: number; headSha: string },
 ): Promise<void> {
   const cfg = await config(github);
-  const registry = parseRegistry(await github.readText(cfg.agreementRegistryPath));
+  const policy = policyGateway(github, cfg);
+  const registry = parseRegistry(await policy.readText(cfg.agreementRegistryPath));
   const entry = findAgreement(
     registry,
     input.contributor.id,
@@ -65,10 +70,11 @@ export async function onSigningIssue(
     return;
   }
 
-  const agreement = await github.readTextWithSha(cfg.agreementTemplatePath);
+  const policy = policyGateway(github, cfg);
+  const agreement = await policy.readTextWithSha(cfg.agreementTemplatePath);
   if (!agreement) throw new Error(`Agreement template ${cfg.agreementTemplatePath} is missing.`);
 
-  const registry = parseRegistry(await github.readText(cfg.agreementRegistryPath));
+  const registry = parseRegistry(await policy.readText(cfg.agreementRegistryPath));
   const existing = findAgreement(
     registry,
     input.author.id,
@@ -86,7 +92,7 @@ export async function onSigningIssue(
 
   const safeVersion = cfg.agreementVersion.replace(/[^a-z0-9._-]+/gi, "-");
   const recordPath = `${cfg.agreementRecordsDirectory}/${input.author.id}/${safeVersion}.yaml`;
-  const entry = {
+  const entry: AgreementEntry = {
     githubId: input.author.id,
     githubNodeId: input.author.nodeId,
     githubLogin: normalizeLogin(input.author.login),
@@ -95,15 +101,17 @@ export async function onSigningIssue(
     agreementCommit: agreement.sha,
     signedAt: input.createdAt,
     repository: github.fullName(),
+    scope: cfg.agreementScope,
+    scopeOwner: github.repository.owner,
     issueNumber: input.issueNumber,
     issueNodeId: input.nodeId,
     recordPath,
   };
   const updatedRegistry = addAgreement(registry, entry);
   const branch = `cla/${input.author.id}/${input.issueNumber}/${safeVersion}`;
-  const agreementPr = await github.createAgreementPr({
+  const agreementPr = await policy.createAgreementPr({
     branch,
-    base: await github.defaultBranch(),
+    base: await policy.defaultBranch(),
     files: [
       { path: recordPath, content: serializeAgreementRecord(entry) },
       { path: cfg.agreementRegistryPath, content: serializeRegistry(updatedRegistry) },

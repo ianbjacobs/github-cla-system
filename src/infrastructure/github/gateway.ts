@@ -1,5 +1,5 @@
 import type { Octokit } from "@octokit/rest";
-import type { RepositoryRef } from "../../domain/types.js";
+import type { AgreementEntry, RepositoryRef } from "../../domain/types.js";
 
 export class GitHubGateway {
   constructor(
@@ -13,6 +13,10 @@ export class GitHubGateway {
 
   fullName(): string {
     return `${this.repository.owner}/${this.repository.repo}`;
+  }
+
+  forRepository(repository: RepositoryRef): GitHubGateway {
+    return new GitHubGateway(this.octokit, repository);
   }
 
   async defaultBranch(): Promise<string> {
@@ -173,7 +177,7 @@ export class GitHubGateway {
     branch: string;
     base: string;
     files: Array<{ path: string; content: string }>;
-    entry: Record<string, unknown>;
+    entry: AgreementEntry;
     registryPath: string;
     label: string;
   }): Promise<{ number: number; nodeId: string; url: string; sha: string }> {

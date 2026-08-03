@@ -13,18 +13,24 @@ const entry: AgreementEntry = {
   agreementCommit: "abcdef1234567",
   signedAt: "2026-08-03T12:00:00.000Z",
   repository: "owner/repo",
+  scope: "repository",
+  scopeOwner: "owner",
   issueNumber: 9,
   issueNodeId: "I_9",
   recordPath: "agreements/42/1.0.yaml",
 };
 
-function gateway(registry: string | null): GitHubGateway {
+function gateway(registry: string | null, configuration: string | null = null): GitHubGateway {
+  const policy = {
+    readText: vi.fn(async (path: string) => (path === "AGREEMENTS.yaml" ? registry : null)),
+  } as unknown as GitHubGateway;
   return {
     readText: vi.fn(async (path: string) => {
-      if (path === ".github/cla/config.yml") return null;
+      if (path === ".github/cla/config.yml") return configuration;
       if (path === "AGREEMENTS.yaml") return registry;
       return null;
     }),
+    forRepository: vi.fn(() => policy),
     fullName: vi.fn(() => "owner/repo"),
     setCheck: vi.fn(async () => undefined),
     listOpenPullRequests: vi.fn(async () => []),
@@ -63,6 +69,36 @@ describe("CLA enforcement", () => {
       "Contributor License Agreement",
       "failure",
       expect.stringContaining("GitHub user ID 84"),
+    );
+  });
+
+  it("reads an organization-wide registry from the configured policy repository", async () => {
+    const organizationEntry: AgreementEntry = {
+      ...entry,
+      repository: "owner/source-repo",
+      scope: "organization",
+      scopeOwner: "owner",
+    };
+    const github = gateway(
+      serializeRegistry({ schemaVersion: 1, agreements: [organizationEntry] }),
+      "agreementScope: organization\npolicyRepository: owner/contributor-agreements\n",
+    );
+
+    await onContributionPullRequest(github, {
+      contributor: { id: 42, nodeId: "U_42", login: "octocat" },
+      number: 11,
+      headSha: "organization123",
+    });
+
+    expect(github.forRepository).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "contributor-agreements",
+    });
+    expect(github.setCheck).toHaveBeenCalledWith(
+      "organization123",
+      "Contributor License Agreement",
+      "success",
+      expect.any(String),
     );
   });
 

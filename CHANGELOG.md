@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-alpha.1 RC3
+
+### Fixed
+
+- Corrected the legacy-registry test fixture so removing optional scope fields removes each complete YAML line, including indentation.
+- No production behavior changed.
+
 ## 0.4.0-alpha.1 RC3
 
 ### Fixed
@@ -73,3 +80,17 @@
 
 - Signing no longer requires or references a contribution pull request.
 - Unsigned contribution PRs receive a failed check with instructions to use the signing Issue Form.
+
+## 0.5.0-alpha.1 - Milestone 5 RC1
+
+### Added
+
+- Versioned CLA repository configuration with explicit scope.
+- Optional central policy repository for organization-wide agreement storage and lookup.
+- Organization-scoped registry records accepted across repositories owned by the same organization.
+- Configuration and organization-scope tests.
+
+### Changed
+
+- Agreement records now include `scope` and `scopeOwner`.
+- Agreement version changes require a new matching acceptance while retaining prior records.
