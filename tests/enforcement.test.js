@@ -36,9 +36,9 @@ describe("contributor agreement enforcement", () => {
     expect(evaluateContributorAgreement({ githubId: 42 }, upgraded).authorized).toBe(false);
   });
 
-  it("exempts only generated Agreement PRs from the base repository", () => {
+  it("exempts generated Agreement PRs from the base repository before labeling", () => {
     const generated = {
-      labels: ["agreement"],
+      labels: [],
       headRef: "agreement/42/issue-7",
       headRepository: "owner/repo",
       baseRepository: "owner/repo",

@@ -3,7 +3,7 @@ name: Refresh Contributor Agreements
 on:
   push:
     paths:
-      - AGREEMENTS.yaml
+      - CLA_REGISTRY.yaml
 
 permissions:
   contents: read

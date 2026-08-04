@@ -28,7 +28,7 @@ const evaluation = evaluateContributorAgreement(
     headRepository: process.env.PULL_REQUEST_HEAD_REPOSITORY ?? "",
     baseRepository: process.env.BASE_REPOSITORY ?? "",
   },
-  await readFile(process.env.AGREEMENTS_PATH ?? "AGREEMENTS.yaml", "utf8"),
+  await readFile(process.env.CLA_REGISTRY_PATH ?? "CLA_REGISTRY.yaml", "utf8"),
 );
 const status = statusFromEvaluation(evaluation);
 console.log(evaluation.summary);

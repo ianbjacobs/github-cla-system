@@ -3,7 +3,7 @@ import { prepareAgreementRequest } from "../lib/agreement-request.js";
 
 const eventPath = process.env.GITHUB_EVENT_PATH;
 const outputPath = process.env.GITHUB_OUTPUT;
-const registryPath = process.env.AGREEMENTS_PATH ?? "AGREEMENTS.yaml";
+const registryPath = process.env.CLA_REGISTRY_PATH ?? "CLA_REGISTRY.yaml";
 
 if (!eventPath) {
   console.error("GITHUB_EVENT_PATH is required.");

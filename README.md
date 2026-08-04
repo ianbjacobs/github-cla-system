@@ -1,39 +1,41 @@
 # GitHub CLA Actions
 
-An Actions-only contributor agreement workflow. It requires no hosted server, webhook endpoint, database, GitHub App private key, or long-running process.
+A repository-local, GitHub Actions-only system for collecting and enforcing contributor agreements. It requires no GitHub App, webhook server, external database, private key, or long-running service.
 
-## Release candidate: A4
+## How it works
 
-The complete workflow is:
+1. An unsigned contributor opens a pull request.
+2. The `Contributor Agreement` workflow checks the author's immutable numeric GitHub ID against `CLA_REGISTRY.yaml`.
+3. If no current agreement exists, the required status fails and a managed PR comment links to the **Sign Contributor Agreement** Issue Form.
+4. The contributor submits the form with both acknowledgements checked.
+5. The `Create Agreement PR` workflow creates an `agreement/<github-id>/issue-<number>` branch, updates `CLA_REGISTRY.yaml`, and opens an `agreement` pull request.
+6. A maintainer reviews and merges that agreement PR.
+7. The `Refresh Contributor Agreements` workflow re-evaluates open pull requests, turns the original status green, and removes the signing comment.
 
-1. A contributor opens **Sign Contributor Agreement** and checks both acknowledgements.
-2. GitHub Actions reads the authenticated user and issue metadata from the event payload.
-3. The workflow creates `agreement/<github-id>/issue-<number>`.
-4. It updates `AGREEMENTS.yaml` on that branch only.
-5. It opens a pull request labeled `agreement` whose body contains `Closes #<issue>`.
-6. A maintainer reviews and merges the Agreement PR.
-7. Only the merge changes the canonical registry on the default branch and closes the signing issue.
-8. Contribution PRs receive the required `Contributor Agreement` status.
-9. When `AGREEMENTS.yaml` changes on the default branch, all open contribution PRs are re-evaluated automatically.
+Only `CLA_REGISTRY.yaml` on the default branch is authoritative. A signing issue is the contributor's attestation; the generated agreement PR is a proposal; the maintainer merge is the repository's acceptance of that record.
 
-## Setup
+## Repository setup
 
-1. Replace `agreement/CONTRIBUTOR_AGREEMENT.md` and the Issue Form placeholder with approved agreement text.
-2. Commit the Issue Form and workflows to the default branch. This repository currently uses `actions-only`, but the workflows resolve `${{ github.event.repository.default_branch }}` dynamically.
-3. In **Settings → Actions → General → Workflow permissions**, grant read/write permissions and enable **Allow GitHub Actions to create and approve pull requests**. The workflow creates PRs but does not approve them.
-4. Configure a branch ruleset for the default branch that requires the status context `Contributor Agreement`.
-5. Ensure only maintainers can merge Agreement PRs.
+1. Replace the placeholder terms in `agreement/CONTRIBUTOR_AGREEMENT.md`.
+2. Put the same approved terms in `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml`.
+3. Ensure the repository has a `pending-agreement` label. Issue Forms only apply labels that already exist.
+4. In **Settings → Actions → General → Workflow permissions**, grant read and write permissions and allow GitHub Actions to create pull requests.
+5. Create a branch ruleset for the default branch that requires the exact status context `Contributor Agreement`.
+6. Restrict agreement PR merges to maintainers through normal repository permissions and review policy.
 
-See [docs/actions-only.md](docs/actions-only.md) for architecture, security boundaries, permissions, and operations.
+The workflows resolve the repository's default branch dynamically.
 
 ## Development
 
+Requires Node.js 22.
+
 ```bash
 npm install
-npm run format
 npm run check
 ```
 
-## Registry trust model
+See [docs/actions-only.md](docs/actions-only.md) for the workflow and security model, and [docs/troubleshooting.md](docs/troubleshooting.md) for operational checks.
 
-`AGREEMENTS.yaml` on the default branch is authoritative. An opened issue is a contributor attestation; an opened Agreement PR is a proposal; a merged Agreement PR is project acceptance.
+## Experimental status
+
+This project is experimental. Obtain independent legal, security, privacy, and operational review before relying on it for legally significant agreements.

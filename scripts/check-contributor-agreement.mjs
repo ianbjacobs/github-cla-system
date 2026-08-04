@@ -20,7 +20,7 @@ if (!idText || !/^\d+$/.test(idText)) {
   process.exit(2);
 }
 
-const registryPath = process.env.AGREEMENTS_PATH ?? "AGREEMENTS.yaml";
+const registryPath = process.env.CLA_REGISTRY_PATH ?? "CLA_REGISTRY.yaml";
 const result = evaluateContributorAgreement(
   {
     githubId: Number(idText),

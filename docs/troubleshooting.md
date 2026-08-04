@@ -1,55 +1,37 @@
-# Troubleshooting and recovery
+# Troubleshooting
 
-## Webhook delivery is rejected
+## The signing Issue Form is missing
 
-- `401`: verify `WEBHOOK_SECRET` and GitHub's `X-Hub-Signature-256` header.
-- `400`: confirm `X-GitHub-Event`, `X-GitHub-Delivery`, and a valid JSON body are present.
-- `413`: increase `MAX_WEBHOOK_BYTES` only after confirming the delivery is legitimate.
-- Duplicate deliveries are acknowledged without processing while their delivery ID remains in the
-  process-local cache.
+- Confirm `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml` is on the default branch.
+- Confirm Issues are enabled.
+- Confirm the Issue Form YAML is valid.
 
-Use GitHub's App webhook delivery view to inspect and redeliver failed events. A redelivery with the
-same delivery ID may require waiting for the cache TTL or restarting the process after determining
-that the original processing did not complete successfully.
+## A signing issue does not create an agreement PR
 
-## Agreement PR is not created
+- Confirm the issue has the exact `pending-agreement` label.
+- Create that label in the repository before testing; Issue Forms do not create missing labels.
+- Inspect the `Create Agreement PR` workflow run.
+- Confirm Actions has write permission and may create pull requests.
 
-Check that:
+## An agreement PR fails the CLA status
 
-- both exact Issue Form acknowledgement labels are checked;
-- `.github/cla/config.yml` is valid;
-- the canonical agreement file exists;
-- the App has Contents, Issues, and Pull requests write permissions;
-- organization mode points to a repository where the App is installed.
+The head branch must begin with `agreement/` and must belong to the base repository. Create a new workflow event after updating trusted default-branch code; rerunning an old workflow reuses its original event payload.
 
-The source issue remains open when validation fails and receives an explanatory comment.
+## An unsigned PR has a green Actions job
 
-## CLA check does not update
+The job can execute successfully while publishing a failing `Contributor Agreement` commit status. Protect the branch using the explicit `Contributor Agreement` status, not only the job named `Evaluate contributor agreement`.
 
-Confirm that:
+## The signing comment does not disappear immediately
 
-- the contribution PR author has a numeric ID in the authoritative `AGREEMENTS.yaml`;
-- the stored agreement version exactly matches `agreementVersion`;
-- the Agreement PR was merged rather than merely closed;
-- the PR carries the configured agreement label and untouched metadata marker;
-- the App receives Pull request and Push events.
+Reload the pull-request page after the agreement PR merges. If it remains, inspect the latest `Refresh Contributor Agreements` run.
 
-Synchronizing the contribution PR or pushing to the default branch triggers another evaluation.
+## Local validation fails
 
-## Recovering state
+Run:
 
-The application has no external database. Authoritative state consists of:
+```bash
+npm run format
+npm run check
+```
 
-- the canonical agreement file and its Git blob SHA;
-- immutable records under `agreements/`;
-- `AGREEMENTS.yaml`;
-- GitHub issues, Agreement PRs, and Git history.
-
-Back up the Git repository normally. The delivery-deduplication cache is disposable process state
-and does not need backup.
-
-## Rebuilding a damaged registry
-
-Do not edit authorization entries without review. Reconstruct `AGREEMENTS.yaml` from the immutable
-record files in a normal pull request, compare every entry to its source issue and agreement version,
-and merge only after maintainer validation. An automated rebuild command is not included in v1.0.
+Commit formatter changes to the PR's head branch; changing only the base branch does not update validation of an existing PR head.
