@@ -1,127 +1,51 @@
 # Changelog
 
-## 1.0.0-rc.1 - Milestone 7
+## 1.0.0-rc.1 — A4 RC1
 
 ### Added
 
-- Full lifecycle integration test covering unsigned enforcement, signing, generated records, merge validation, and successful re-evaluation.
-- GitHub App installation, troubleshooting, recovery, release, and project-state documentation.
-- Tag-triggered source release archives with SHA-256 checksums.
-- Milestone 7 release-candidate checklist and live smoke-test gate.
+- Automatic re-evaluation of open pull requests whenever `AGREEMENTS.yaml` changes on the default branch.
+- Shared `Contributor Agreement` commit-status mapping for initial PR checks and refreshes.
+- Status-description length normalization.
+- Tag-triggered source release workflow with a SHA-256 checksum.
+- Final Actions-only architecture, setup, security, and operations documentation.
+- Unit tests for status mapping and open-PR refresh behavior.
 
 ### Changed
 
-- Package version advanced to `1.0.0-rc.1`.
-- README, deployment, and security guidance now describe release-candidate requirements.
-- Package description no longer labels the application experimental.
+- The pull-request enforcement workflow now publishes an explicit required commit status.
+- Documentation recognizes `actions-only` as this repository's current default branch while keeping workflows portable.
 
-## 0.6.0-alpha.1 - Milestone 6
-
-### Added
-
-- Structured JSON logging with configurable severity.
-- Liveness, readiness, optional Prometheus metrics, and restrictive HTTP response headers.
-- Bounded process-local GitHub delivery deduplication.
-- Graceful SIGINT/SIGTERM shutdown with connection draining and a forced timeout.
-- Configurable webhook body limits with explicit `413` responses.
-- Non-root multi-stage Docker image, Compose example, deployment guide, and container CI build.
-- Tests for delivery-cache expiry, metrics output, health behavior, and duplicate deliveries.
-
-### Changed
-
-- `X-GitHub-Delivery` is now required for webhook requests.
-- Package version advanced to `0.6.0-alpha.1`.
-- `npm start` now points to the compiled `dist/src/server.js` entry point.
-
-## 0.5.0-alpha.1 RC3
+## 0.3.0-alpha.2 — A3 RC2
 
 ### Fixed
 
-- Corrected the legacy-registry test fixture so removing optional scope fields removes each complete YAML line, including indentation.
-- No production behavior changed.
+- Corrected the enforcement test registry fixture so `signedAt` remains a YAML string, matching generated `AGREEMENTS.yaml` records.
 
-## 0.4.0-alpha.1 RC3
-
-### Fixed
-
-- Exempt generated Agreement PRs from contribution enforcement when identified by either the `agreement` label or the generated PR metadata marker.
-- Corrected the router test contract: malformed payloads for supported webhook events return `invalid`, while unsupported event names return `ignored`.
-
-## 0.4.0-alpha.1 RC2
-
-### Fixed
-
-- Applied Biome formatting across Milestone 4 source and test files.
-- Organized imports and exports so `npm run check` remains read-only and clean.
-- No functional behavior changed from Milestone 4 RC1.
-
-## 0.4.0-alpha.1 - Milestone 4
+## 0.3.0-alpha.1 — A3 RC1
 
 ### Added
 
-- CLA Check Run enforcement for opened, reopened, and synchronized contribution pull requests.
-- Default-branch push handling that re-evaluates all open contribution pull requests.
-- Push webhook validation and dispatch tests.
-- Exemption for generated Agreement PRs, preventing circular CLA enforcement.
+- Trusted pull-request contributor-agreement enforcement.
+- Current agreement-version lookup by immutable numeric GitHub user ID.
+- Safe generated Agreement PR exemption with fork-imitation protection.
 
-### Changed
-
-- `npm run check` is now read-only; `npm run format` performs formatting and safe fixes.
-- GitHub App subscriptions now include push events.
-- Documentation now reflects standalone signing and current enforcement behavior.
-
-## 1.0.0-alpha.2 - Unreleased
+## 0.2.0-alpha.1 — A2 RC1
 
 ### Added
 
-- Event-specific Zod schemas for `issues` and `pull_request` webhooks.
-- A dependency-injected webhook dispatcher with explicit handled, ignored, and invalid outcomes.
-- Tests for payload parsing, routing, installation IDs, and preservation of issue node IDs.
-- Webhook delivery ID logging and a one-megabyte request body limit.
+- Automatic `issues.opened` workflow for signing requests.
+- Trusted event-payload parsing for contributor numeric ID, user node ID, issue node ID, login, and timestamp.
+- Deterministic Agreement PR branch creation.
+- Branch-only `AGREEMENTS.yaml` update.
+- Automatically labeled Agreement PR with `Closes #<issue>`.
+- Helpful handling for invalid requests and contributors who already signed the current version.
+- Unit tests for agreement-request preparation.
 
-### Changed
+## 0.1.0-alpha.2 — A1 RC2
 
-- The HTTP server now returns distinct responses for invalid JSON, missing headers, invalid payloads, ignored events, and handled events.
-- The legacy router module now remains as a compatibility export over the dispatcher.
+- Migrated Biome recommended rules to the current `preset` syntax.
 
-## 1.0.0-alpha.1
+## 0.1.0-alpha.1 — A1 RC1
 
-- Establish the experimental Node.js 22 and TypeScript project foundation.
-- Add GitHub App authentication and webhook verification scaffolding.
-- Add repository configuration, registry, issue-form, and workflow prototypes.
-- Adopt the W3C Software Notice and License.
-- Fix Octokit request typing under `exactOptionalPropertyTypes`, including optional refs and check-run payloads.
-
-## 0.3.0-alpha.1 - Milestone 3
-
-### Fixed
-
-- Removed the obsolete contribution-PR-number test from the standalone signing workflow.
-- Expanded Issue Form tests to cover checked, unchecked, and mismatched acknowledgement labels.
-
-### Added
-
-- Standalone Issue Form to Agreement PR workflow.
-- Immutable per-contributor agreement records under `agreements/`.
-- Agreement blob SHA, GitHub user node ID, issue node ID, and GitHub issue timestamp provenance.
-- Multi-file commits for agreement records and the generated registry.
-- Re-evaluation of open contribution PR checks after an agreement PR merges.
-
-### Changed
-
-- Signing no longer requires or references a contribution pull request.
-- Unsigned contribution PRs receive a failed check with instructions to use the signing Issue Form.
-
-## 0.5.0-alpha.1 - Milestone 5 RC1
-
-### Added
-
-- Versioned CLA repository configuration with explicit scope.
-- Optional central policy repository for organization-wide agreement storage and lookup.
-- Organization-scoped registry records accepted across repositories owned by the same organization.
-- Configuration and organization-scope tests.
-
-### Changed
-
-- Agreement records now include `scope` and `scopeOwner`.
-- Agreement version changes require a new matching acceptance while retaining prior records.
+- Established the clean Actions-only project baseline.

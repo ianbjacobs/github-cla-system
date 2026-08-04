@@ -1,0 +1,2 @@
+- [x] I have read and agree to the Contributor Agreement.
+- [x] I am submitting this agreement for my own authenticated GitHub account.

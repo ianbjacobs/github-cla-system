@@ -1,10 +1,12 @@
 name: CI
+
 on:
   push:
-    branches: [main]
   pull_request:
+
 permissions:
   contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -13,6 +15,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - run: npm run ci
-      - run: docker build --tag github-cla-system:test .
+      - run: npm install --ignore-scripts
+      - run: npm run check
