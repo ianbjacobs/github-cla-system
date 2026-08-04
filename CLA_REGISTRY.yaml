@@ -1,10 +1,3 @@
 schemaVersion: 1
 agreementVersion: '1.0'
-agreements:
-  - githubId: 2948484
-    githubNodeId: MDQ6VXNlcjI5NDg0ODQ=
-    githubLogin: ianbjacobs
-    agreementVersion: '1.0'
-    signedAt: '2026-08-04T18:48:54Z'
-    issueNumber: 37
-    issueNodeId: I_kwDOTs5tNs8AAAABLdPSWg
+agreements: []
