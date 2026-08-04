@@ -27,7 +27,9 @@ async function request(path, options = {}) {
 }
 
 const pullRequests = await request(`/repos/${repository}/pulls?state=open&per_page=100`);
-const pullRequestsByNumber = new Map(pullRequests.map((pullRequest) => [pullRequest.number, pullRequest]));
+const pullRequestsByNumber = new Map(
+  pullRequests.map((pullRequest) => [pullRequest.number, pullRequest]),
+);
 
 const results = await refreshOpenPullRequests({
   repository,
