@@ -1,54 +1,42 @@
 # Actions-only architecture
 
-## Workflows
+## Create Agreement PR
 
-### Create Agreement PR
-
-Triggered by `issues.opened`. It validates the signing Issue Form, derives identity and issue provenance from the trusted event payload, updates `AGREEMENTS.yaml` on a deterministic branch, and opens a PR labeled `agreement` with `Closes #<issue>`.
+`.github/workflows/create-agreement-pr.yml` runs for newly opened issues carrying the `pending-agreement` label. It validates the exact Issue Form acknowledgements, reads contributor identity and issue provenance from the trusted event payload, updates `CLA_REGISTRY.yaml` on a deterministic branch, and opens a pull request labeled `agreement` with `Closes #<issue>`.
 
 Permissions: `contents: write`, `issues: write`, and `pull-requests: write`.
 
-### Contributor Agreement
+## Contributor Agreement
 
-Triggered by `pull_request_target` for opened, reopened, synchronized, labeled, and unlabeled PRs. The workflow explicitly checks out the default branch and never checks out the contributor branch. It evaluates the PR author's immutable numeric GitHub ID against the canonical registry and publishes the `Contributor Agreement` commit status on the PR head SHA.
+`.github/workflows/check-contributor-agreement.yml` runs on `pull_request_target` for opened, reopened, synchronized, labeled, and unlabeled pull requests. It explicitly checks out the trusted default branch and never checks out or executes the contributor branch.
 
-A generated Agreement PR is exempt only when all three conditions hold:
+It evaluates the PR author's immutable numeric GitHub ID against `CLA_REGISTRY.yaml`, publishes the required `Contributor Agreement` commit status on the PR head SHA, and manages one signing-instructions comment while the contributor is unsigned.
 
-- the PR has the `agreement` label;
-- its head branch starts with `agreement/`; and
-- its head repository is the same trusted repository as the base repository.
+A generated agreement PR is exempt only when its head branch starts with `agreement/` and its head repository is the same repository as the base. The label is not required for the exemption because GitHub may emit the PR-opened event before automation attaches the label.
 
-This prevents a fork from imitating the label and branch name to bypass enforcement.
+Permissions: `contents: read`, `issues: write`, `pull-requests: write`, and `statuses: write`.
 
-Permissions: `contents: read` and `statuses: write`.
+## Refresh Contributor Agreements
 
-### Refresh Contributor Agreements
+`.github/workflows/refresh-contributor-agreements.yml` runs when `CLA_REGISTRY.yaml` changes on the default branch. It re-evaluates open pull requests, republishes the same required status, and creates, updates, or removes the managed signing comment as appropriate.
 
-Triggered by a default-branch push that changes `AGREEMENTS.yaml`. It reads the updated canonical registry, lists open pull requests, re-evaluates each author, and republishes the same `Contributor Agreement` status on each PR head SHA.
+Permissions: `contents: read`, `issues: write`, `pull-requests: read`, and `statuses: write`.
 
-Permissions: `contents: read`, `pull-requests: read`, and `statuses: write`.
+The current implementation processes the first 100 open pull requests returned by GitHub.
 
-## Security boundary
+## Trust model
 
-The enforcement workflows must not run contributor-provided scripts or check out a PR head. `pull_request_target` has elevated trust, so all executable files and the registry are explicitly loaded from the trusted default branch.
-
-Authorization is based on the numeric GitHub user ID. Login names are retained only for readability and audit history.
+- `CLA_REGISTRY.yaml` on the default branch is the sole authorization source.
+- Signing issue identity comes from the authenticated GitHub event payload, not user-entered text.
+- Agreement records are proposed by automation and accepted only when a maintainer merges the generated PR.
+- Login changes do not affect authorization because matching uses the numeric GitHub user ID.
 
 ## Required branch rule
 
-Configure the default branch ruleset to require the status context:
+Require the exact status context:
 
 ```text
 Contributor Agreement
 ```
 
-Do not require the workflow job name as a separate check; A4 uses one explicit commit-status context for both normal PR evaluation and refresh after registry merges.
-
-## Operational behavior
-
-- Invalid signing issues receive a comment explaining which acknowledgements are missing.
-- Existing current signers are informed and their redundant issue is closed.
-- Valid signing issues remain open until the generated Agreement PR merges.
-- Closing an Agreement PR without merging leaves the signing issue open.
-- Merging an Agreement PR updates the canonical registry and automatically refreshes open contribution PRs.
-- Refresh currently handles the first 100 open PRs returned by GitHub. Repositories with more than 100 simultaneous open PRs should add API pagination before production use.
+Do not use the workflow job name as the merge gate; the explicit commit-status context is shared by initial evaluation and registry refresh.

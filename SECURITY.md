@@ -1,16 +1,14 @@
 # Security policy
 
-GitHub CLA System is a release candidate. Do not use it to collect legally significant
-acceptances without an independent security, privacy, operational, and legal review.
+This project is experimental. Do not rely on it for legally significant acceptances without independent legal, security, privacy, and operational review.
 
-Please report suspected vulnerabilities privately to the repository
-maintainers. Do not include secrets, private keys, webhook secrets, or personal
-data in public issues.
+Report suspected vulnerabilities privately to the repository maintainers. Do not include secrets or personal data in public issues.
 
-## Production runtime guidance
+## Security boundaries
 
-- Terminate TLS at a trusted ingress and expose only the webhook and health endpoints required by the platform.
-- Mount the GitHub App private key read-only from a secret manager; never bake it into a container image.
-- Keep `/metrics` disabled unless the deployment network restricts access to authorized monitoring systems.
-- Treat the in-process webhook delivery cache as best-effort only. Multiple replicas must still tolerate duplicate GitHub deliveries.
-- Monitor structured error logs and the `github_cla_webhooks_total` error outcome.
+- The pull-request check uses `pull_request_target`, but checks out and executes only code from the trusted default branch.
+- The workflow must never check out or execute contributor-controlled PR code.
+- Authorization uses the contributor's immutable numeric GitHub user ID; logins are retained only for readability and audit history.
+- Generated agreement PRs are exempt only when their branch is in the base repository and starts with `agreement/`.
+- Workflow permissions are declared explicitly and should not be broadened without review.
+- `CLA_REGISTRY.yaml` changes become authoritative only after merge to the default branch.

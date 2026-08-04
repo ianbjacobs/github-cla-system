@@ -33,7 +33,7 @@ const pullRequestsByNumber = new Map(
 
 const results = await refreshOpenPullRequests({
   repository,
-  registrySource: await readFile("AGREEMENTS.yaml", "utf8"),
+  registrySource: await readFile("CLA_REGISTRY.yaml", "utf8"),
   listPullRequests: () => pullRequests,
   publishStatus: ({ sha, state, context, description }) =>
     request(`/repos/${repository}/statuses/${sha}`, {
