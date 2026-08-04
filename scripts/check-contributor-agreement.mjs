@@ -1,5 +1,18 @@
 import { readFile } from "node:fs/promises";
-import { findCurrentAgreement, parseRegistry } from "../lib/registry.js";
+import { evaluateContributorAgreement } from "../lib/enforcement.js";
+
+function parseLabels(source) {
+  if (!source) return [];
+  try {
+    const parsed = JSON.parse(source);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return source
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+}
 
 const idText = process.env.CONTRIBUTOR_GITHUB_ID ?? process.argv[2];
 if (!idText || !/^\d+$/.test(idText)) {
@@ -8,10 +21,16 @@ if (!idText || !/^\d+$/.test(idText)) {
 }
 
 const registryPath = process.env.AGREEMENTS_PATH ?? "AGREEMENTS.yaml";
-const registry = parseRegistry(await readFile(registryPath, "utf8"));
-const entry = findCurrentAgreement(registry, Number(idText));
-if (!entry) {
-  console.error(`No current agreement found for GitHub user ID ${idText}.`);
-  process.exit(1);
-}
-console.log(`Current agreement ${entry.agreementVersion} found for @${entry.githubLogin}.`);
+const result = evaluateContributorAgreement(
+  {
+    githubId: Number(idText),
+    labels: parseLabels(process.env.PULL_REQUEST_LABELS),
+    headRef: process.env.PULL_REQUEST_HEAD_REF ?? "",
+    headRepository: process.env.PULL_REQUEST_HEAD_REPOSITORY ?? "",
+    baseRepository: process.env.BASE_REPOSITORY ?? "",
+  },
+  await readFile(registryPath, "utf8"),
+);
+
+console.log(result.summary);
+process.exit(result.authorized ? 0 : 1);

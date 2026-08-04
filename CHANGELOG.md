@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-alpha.2
+
+### Fixed
+
+- Corrected the enforcement test registry fixture so `signedAt` remains a YAML string, matching generated `AGREEMENTS.yaml` records.
+
 ## 0.2.0-alpha.1 — A2 RC1
 
 ### Added
