@@ -13,6 +13,16 @@ body:
         Before enabling this template, maintainers must replace this placeholder with the same
         approved terms stored in `agreement/CONTRIBUTOR_AGREEMENT.md`.
 
+
+  - type: input
+    id: target_branch
+    attributes:
+      label: Target branch
+      description: The branch whose Contributor Agreement registry should be updated. Do not change the prefilled value when following a signing link from a pull request.
+      placeholder: main
+    validations:
+      required: true
+
   - type: checkboxes
     id: acceptance
     attributes:

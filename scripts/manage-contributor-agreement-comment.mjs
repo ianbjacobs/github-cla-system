@@ -7,9 +7,10 @@ const serverUrl = process.env.GITHUB_SERVER_URL ?? "https://github.com";
 const pullRequestNumber = Number(process.env.PULL_REQUEST_NUMBER);
 const state = process.env.AGREEMENT_STATE;
 const login = process.env.CONTRIBUTOR_LOGIN;
+const baseRef = process.env.PULL_REQUEST_BASE_REF;
 
-if (!repository || !token) {
-  throw new Error("GITHUB_REPOSITORY and GITHUB_TOKEN are required.");
+if (!repository || !token || !baseRef) {
+  throw new Error("GITHUB_REPOSITORY, GITHUB_TOKEN, and PULL_REQUEST_BASE_REF are required.");
 }
 if (!Number.isSafeInteger(pullRequestNumber) || pullRequestNumber <= 0) {
   throw new TypeError("PULL_REQUEST_NUMBER must be a positive integer.");
@@ -34,7 +35,11 @@ async function request(path, options = {}) {
 }
 
 const commentsPath = `/repos/${repository}/issues/${pullRequestNumber}/comments`;
-const signingUrl = `${serverUrl}/${repository}/issues/new?template=sign-contributor-agreement.yml`;
+const signingParameters = new URLSearchParams({
+  template: "sign-contributor-agreement.yml",
+  target_branch: baseRef,
+});
+const signingUrl = `${serverUrl}/${repository}/issues/new?${signingParameters}`;
 
 const result = await synchronizeContributorAgreementComment({
   state,
