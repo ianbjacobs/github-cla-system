@@ -1,4 +1,4 @@
-# GitHub CLA Actions
+# GitHub CLA Actions - Test
 
 An Actions-only contributor agreement workflow. It requires no hosted server, webhook endpoint, database, GitHub App private key, or long-running process.
 
