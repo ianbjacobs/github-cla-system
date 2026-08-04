@@ -27,7 +27,7 @@ The workflows resolve the repository's default branch dynamically.
 
 ## Development
 
-Requires Node.js 22.
+Requires Node.js 21.
 
 ```bash
 npm install
