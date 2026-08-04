@@ -4,6 +4,10 @@ A repository-local, GitHub Actions-only system for collecting and enforcing cont
 
 **This project is experimental.** Obtain independent legal, security, privacy, and operational review before relying on it for legally significant agreements.
 
+## Use this tool in your repo
+
+See the [Installation and configuration guide](docs/installation.md).
+
 ## How it works
 
 1. An unsigned contributor opens a pull request.
@@ -15,17 +19,6 @@ A repository-local, GitHub Actions-only system for collecting and enforcing cont
 7. The `Refresh Contributor Agreements` workflow re-evaluates open pull requests, turns the original status green, and removes the signing comment.
 
 Only `CLA_REGISTRY.yaml` on the default branch is authoritative. A signing issue is the contributor's attestation; the generated agreement PR is a proposal; the maintainer merge is the repository's acceptance of that record.
-
-## To use this tool in your repository
-
-1. Replace the placeholder terms in `agreement/CONTRIBUTOR_AGREEMENT.md`.
-2. Put the same approved terms in `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml`.
-3. Ensure the repository has a `pending-agreement` label.
-4. In **Settings → Actions → General → Workflow permissions**, grant read and write permissions and allow GitHub Actions to create pull requests.
-5. Create a branch ruleset for the default branch that requires the exact status context `Contributor Agreement`.
-6. Restrict agreement PR merges to maintainers through normal repository permissions and review policy.
-
-The workflows resolve the repository's default branch dynamically.
 
 ## Development
 
