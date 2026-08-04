@@ -6,19 +6,20 @@ A repository-local, GitHub Actions-only system for collecting and enforcing cont
 
 ## Use this tool in your repo
 
-See the [Installation and configuration guide](docs/installation.md).
+See the [Installation and configuration guide](docs/installation.md) and [how it works](docs/howitworks.md).
 
-## How it works
+## User journey
 
-1. An unsigned contributor opens a pull request.
-2. The `Contributor Agreement` workflow checks the author's immutable numeric GitHub ID against `CLA_REGISTRY.yaml`.
-3. If no current agreement exists, the required status fails and a managed PR comment links to the **Sign Contributor Agreement** Issue Form.
-4. The contributor submits the form with both acknowledgements checked.
-5. The `Create Agreement PR` workflow creates an `agreement/<github-id>/issue-<number>` branch, updates `CLA_REGISTRY.yaml`, and opens an `agreement` pull request.
-6. A maintainer reviews and merges that agreement PR.
-7. The `Refresh Contributor Agreements` workflow re-evaluates open pull requests, turns the original status green, and removes the signing comment.
+The user must be signed into GitHub to create a pull request. If that GitHub account has previously signed the CLA for this repo, then the pull request can be merged (by the maintainers).
 
-Only `CLA_REGISTRY.yaml` on the default branch is authoritative. A signing issue is the contributor's attestation; the generated agreement PR is a proposal; the maintainer merge is the repository's acceptance of that record.
+If the user has not previously signed the CLA:
+
+* A "sign here" message appears in the discussion thread of the pull request to let them know they must agree to the CLA in order for the pull request to be merged.
+* The user follows a link to sign the CLA. This creates a new issue in the repo (with label 'pending-agreement').
+* The creation of the issue triggers creation of a pull request to record (in CLA_REGISTRY.yaml) acceptance of the CLA by this GitHub account.
+* That pull request must be merged by the repo maintainers, and approval modifies CLA_Registry.yaml.
+* This merge triggers an action that closes the issue that was created, and also removes the "sign here" message from the original pull request.
+* Then the maintainers can evaluate and possibly merge the original pull request, now that there is a record of the user signing the CLA.
 
 ## Development
 
