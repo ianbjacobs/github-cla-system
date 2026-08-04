@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   statuses: write
 
 jobs:
@@ -52,3 +53,11 @@ jobs:
             -f context="$CONTEXT" \
             -f description="$DESCRIPTION" \
             -f target_url="$TARGET_URL"
+
+      - name: Synchronize signing instructions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          CONTRIBUTOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          AGREEMENT_STATE: ${{ steps.evaluate.outputs.state }}
+        run: node scripts/manage-contributor-agreement-comment.mjs
