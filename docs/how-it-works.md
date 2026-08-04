@@ -1,12 +1,24 @@
-# Actions-only architecture
+# How it works
 
-## Create Agreement PR
+1. An unsigned contributor opens a pull request.
+2. The `Contributor Agreement` workflow checks the author's immutable numeric GitHub ID against `CLA_REGISTRY.yaml`.
+3. If no current agreement exists, the required status fails and a managed PR comment links to the **Sign Contributor Agreement** Issue Form.
+4. The contributor submits the form with both acknowledgements checked.
+5. The `Create Agreement PR` workflow creates an `agreement/<github-id>/issue-<number>` branch, updates `CLA_REGISTRY.yaml`, and opens an `agreement` pull request.
+6. A maintainer reviews and merges that agreement PR.
+7. The `Refresh Contributor Agreements` workflow re-evaluates open pull requests, turns the original status green, and removes the signing comment.
+
+Summary: Only `CLA_REGISTRY.yaml` on the default branch is authoritative. A signing issue is the contributor's attestation; the generated agreement PR is a proposal; the maintainer merge is the repository's acceptance of that record.
+
+## Architecture
+
+### Create Agreement PR
 
 `.github/workflows/create-agreement-pr.yml` runs for newly opened issues carrying the `pending-agreement` label. It validates the exact Issue Form acknowledgements, reads contributor identity and issue provenance from the trusted event payload, updates `CLA_REGISTRY.yaml` on a deterministic branch, and opens a pull request labeled `agreement` with `Closes #<issue>`.
 
 Permissions: `contents: write`, `issues: write`, and `pull-requests: write`.
 
-## Contributor Agreement
+### Contributor Agreement
 
 `.github/workflows/check-contributor-agreement.yml` runs on `pull_request_target` for opened, reopened, synchronized, labeled, and unlabeled pull requests. It explicitly checks out the trusted default branch and never checks out or executes the contributor branch.
 
@@ -16,7 +28,7 @@ A generated agreement PR is exempt only when its head branch starts with `agreem
 
 Permissions: `contents: read`, `issues: write`, `pull-requests: write`, and `statuses: write`.
 
-## Refresh Contributor Agreements
+### Refresh Contributor Agreements
 
 `.github/workflows/refresh-contributor-agreements.yml` runs when `CLA_REGISTRY.yaml` changes on the default branch. It re-evaluates open pull requests, republishes the same required status, and creates, updates, or removes the managed signing comment as appropriate.
 
@@ -24,14 +36,14 @@ Permissions: `contents: read`, `issues: write`, `pull-requests: read`, and `stat
 
 The current implementation processes the first 100 open pull requests returned by GitHub.
 
-## Trust model
+### Trust model
 
 - `CLA_REGISTRY.yaml` on the default branch is the sole authorization source.
 - Signing issue identity comes from the authenticated GitHub event payload, not user-entered text.
 - Agreement records are proposed by automation and accepted only when a maintainer merges the generated PR.
 - Login changes do not affect authorization because matching uses the numeric GitHub user ID.
 
-## Required branch rule
+### Required branch rule
 
 Require the exact status context:
 
