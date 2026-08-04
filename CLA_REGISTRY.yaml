@@ -1,3 +1,10 @@
 schemaVersion: 1
 agreementVersion: '1.0'
-agreements: []
+agreements:
+  - githubId: 1490400
+    githubNodeId: MDQ6VXNlcjE0OTA0MDA=
+    githubLogin: plehegar
+    agreementVersion: '1.0'
+    signedAt: '2026-08-04T20:08:52Z'
+    issueNumber: 43
+    issueNodeId: I_kwDOTs5tNs8AAAABLd2SIA
