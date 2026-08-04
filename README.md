@@ -6,7 +6,7 @@ A repository-local, GitHub Actions-only system for collecting and enforcing cont
 
 ## Use this tool in your repo
 
-See the [Installation and configuration guide](docs/installation.md) and [how it works](docs/howitworks.md).
+See the [Installation and configuration guide](docs/installation.md) and [how it works](docs/how-it-works.md).
 
 ## User journey
 
@@ -30,4 +30,4 @@ npm install
 npm run check
 ```
 
-See [docs/actions-only.md](docs/actions-only.md) for the workflow and security model, and [docs/troubleshooting.md](docs/troubleshooting.md) for operational checks.
+See [how it works](docs/how-it-works.md) for the workflow and security model, and [docs/troubleshooting.md](docs/troubleshooting.md) for operational checks.
