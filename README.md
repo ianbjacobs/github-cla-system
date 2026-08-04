@@ -1,4 +1,4 @@
-# GitHub CLA Actions
+# GitHub CLA Actions - test clean
 
 A repository-local, GitHub Actions-only system for collecting and enforcing contributor agreements. It requires no GitHub App, webhook server, external database, private key, or long-running service.
 
