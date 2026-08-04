@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { agreementIssueTitle, agreementTargetBranch } from "../lib/agreement-target.js";
+import { agreementTargetBranch } from "../lib/agreement-target.js";
 
 describe("agreement target branch", () => {
-  it("round-trips a PR base branch through the signing issue title", () => {
-    const title = agreementIssueTitle("test-clean");
-    expect(title).toBe("[Agreement] Acceptance for branch: test-clean");
-    expect(agreementTargetBranch(title, "main")).toBe("test-clean");
+  it("reads the prefilled target branch from an issue form body", () => {
+    const body = `### Target branch\n\ntest-clean\n\n### Agreement acceptance\n\n- [x] I agree`;
+    expect(agreementTargetBranch(body, "main")).toBe("test-clean");
   });
 
-  it("falls back to the default branch for a manually opened issue", () => {
-    expect(agreementTargetBranch("[Agreement] Acceptance", "main")).toBe("main");
+  it("falls back to the default branch when the field is absent", () => {
+    expect(agreementTargetBranch("### Agreement acceptance\n\n- [x] I agree", "main")).toBe("main");
   });
 
   it("supports slash-delimited branch names", () => {
-    const title = agreementIssueTitle("release/next");
-    expect(agreementTargetBranch(title, "main")).toBe("release/next");
+    const body = `### Target branch\n\nrelease/next\n`;
+    expect(agreementTargetBranch(body, "main")).toBe("release/next");
+  });
+
+  it("falls back when GitHub records no response", () => {
+    const body = `### Target branch\n\n_No response_\n`;
+    expect(agreementTargetBranch(body, "main")).toBe("main");
   });
 });

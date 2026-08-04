@@ -12,10 +12,7 @@ if (!outputPath) {
 }
 
 const event = JSON.parse(await readFile(eventPath, "utf8"));
-const targetBranch = agreementTargetBranch(
-  event.issue?.title,
-  event.repository?.default_branch,
-);
+const targetBranch = agreementTargetBranch(event.issue?.body, event.repository?.default_branch);
 
 await appendFile(outputPath, `target_branch=${targetBranch}\n`);
 console.log(`Agreement PR target branch: ${targetBranch}`);

@@ -1,4 +1,3 @@
-import { agreementIssueTitle } from "../lib/agreement-target.js";
 import { synchronizeContributorAgreementComment } from "../lib/contributor-agreement-comment.js";
 
 const repository = process.env.GITHUB_REPOSITORY;
@@ -38,7 +37,7 @@ async function request(path, options = {}) {
 const commentsPath = `/repos/${repository}/issues/${pullRequestNumber}/comments`;
 const signingParameters = new URLSearchParams({
   template: "sign-contributor-agreement.yml",
-  title: agreementIssueTitle(baseRef),
+  target_branch: baseRef,
 });
 const signingUrl = `${serverUrl}/${repository}/issues/new?${signingParameters}`;
 
