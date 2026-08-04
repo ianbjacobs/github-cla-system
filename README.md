@@ -1,4 +1,4 @@
-# GitHub CLA Actions
+# A GitHub-based tool to collect contributor agreements.
 
 A repository-local, GitHub Actions-only system for collecting and enforcing contributor agreements. It requires no GitHub App, webhook server, external database, private key, or long-running service.
 
@@ -14,7 +14,7 @@ A repository-local, GitHub Actions-only system for collecting and enforcing cont
 
 Only `CLA_REGISTRY.yaml` on the default branch is authoritative. A signing issue is the contributor's attestation; the generated agreement PR is a proposal; the maintainer merge is the repository's acceptance of that record.
 
-## Repository setup
+## To use this tool in your repository
 
 1. Replace the placeholder terms in `agreement/CONTRIBUTOR_AGREEMENT.md`.
 2. Put the same approved terms in `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml`.
