@@ -1,9 +1,9 @@
 {
   "name": "github-cla-actions",
-  "version": "0.3.0-alpha.2",
+  "version": "1.0.0-rc.1",
   "private": true,
   "type": "module",
-  "description": "Actions-only GitHub contributor agreement workflow.",
+  "description": "Serverless GitHub Actions workflow for collecting and enforcing contributor agreements.",
   "engines": {
     "node": ">=22 <23"
   },
@@ -15,7 +15,9 @@
     "check": "npm run format:check && npm run test",
     "validate:issue": "node scripts/validate-signing-issue.mjs",
     "check:agreement": "node scripts/check-contributor-agreement.mjs",
-    "prepare:agreement-pr": "node scripts/prepare-agreement-pr.mjs"
+    "prepare:agreement-pr": "node scripts/prepare-agreement-pr.mjs",
+    "evaluate:agreement": "node scripts/evaluate-contributor-agreement.mjs",
+    "refresh:agreements": "node scripts/refresh-contributor-agreements.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

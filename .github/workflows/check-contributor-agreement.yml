@@ -1,17 +1,18 @@
 name: Contributor Agreement
 
-# pull_request_target ensures this workflow and its scripts come from the trusted
-# base repository. It must never check out or execute the contributor's head branch.
+# This workflow uses trusted code from the base repository and never checks out
+# or executes the contributor's branch.
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, labeled, unlabeled]
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   verify:
-    name: Contributor Agreement
+    name: Evaluate contributor agreement
     runs-on: ubuntu-latest
     steps:
       - name: Check out the trusted default branch
@@ -23,16 +24,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: npm install --ignore-scripts
 
-      - name: Verify the pull request author
+      - name: Evaluate the pull request author
+        id: evaluate
         env:
           CONTRIBUTOR_GITHUB_ID: ${{ github.event.pull_request.user.id }}
           PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           PULL_REQUEST_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           BASE_REPOSITORY: ${{ github.event.repository.full_name }}
           PULL_REQUEST_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: npm run check:agreement
+        run: node scripts/evaluate-contributor-agreement.mjs
+
+      - name: Publish required commit status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          STATE: ${{ steps.evaluate.outputs.state }}
+          CONTEXT: ${{ steps.evaluate.outputs.context }}
+          DESCRIPTION: ${{ steps.evaluate.outputs.description }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            -f state="$STATE" \
+            -f context="$CONTEXT" \
+            -f description="$DESCRIPTION" \
+            -f target_url="$TARGET_URL"
