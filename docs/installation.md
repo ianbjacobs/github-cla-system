@@ -135,7 +135,6 @@ Create or edit a branch ruleset and select every branch on which you want CLA en
 
 ```text
 main
-test-clean
 release/*
 ```
 
