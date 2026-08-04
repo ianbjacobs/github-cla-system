@@ -1,26 +1,110 @@
-name: Create Agreement PR (A2 scaffold)
+name: Create Agreement PR
 
-# A2 will replace this manual trigger with `issues: { types: [opened] }` and add the
-# write permissions and GitHub API operations required to create the branch and PR.
 on:
-  workflow_dispatch:
-    inputs:
-      issue_body_file:
-        description: Path to a checked-in issue-body fixture for validating the A1 scaffold
-        required: true
-        default: examples/valid-signing-issue.md
+  issues:
+    types: [opened]
 
 permissions:
-  contents: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: agreement-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
 
 jobs:
-  validate-signing-issue:
+  create-agreement-pr:
+    if: >-
+      github.event.issue.pull_request == null &&
+      contains(github.event.issue.labels.*.name, 'pending-agreement')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out the trusted default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run validate:issue -- "${{ inputs.issue_body_file }}"
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Validate issue and prepare registry change
+        id: prepare
+        run: node scripts/prepare-agreement-pr.mjs
+
+      - name: Explain invalid signing issue
+        if: steps.prepare.outputs.status == 'invalid'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          MISSING: ${{ steps.prepare.outputs.missing }}
+        run: >-
+          gh issue comment "$ISSUE_NUMBER"
+          --body "The agreement request could not be processed because these required acknowledgements were missing: ${MISSING}"
+
+      - name: Explain existing agreement
+        if: steps.prepare.outputs.status == 'already-signed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.prepare.outputs.issue_number }}
+          GITHUB_LOGIN: ${{ steps.prepare.outputs.github_login }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "@${GITHUB_LOGIN} already has a current contributor agreement on the default branch."
+          gh issue close "$ISSUE_NUMBER" --reason completed
+
+      - name: Commit agreement record on a new branch
+        if: steps.prepare.outputs.status == 'prepared'
+        env:
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          COMMIT_MESSAGE: ${{ steps.prepare.outputs.commit_message }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$BRANCH"
+          git add AGREEMENTS.yaml
+          git commit --message "$COMMIT_MESSAGE"
+          git push --set-upstream origin "$BRANCH"
+
+      - name: Ensure agreement label exists
+        if: steps.prepare.outputs.status == 'prepared'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh label create agreement
+          --color 0E8A16
+          --description "Records a reviewed contributor agreement"
+          --force
+
+      - name: Open Agreement PR
+        if: steps.prepare.outputs.status == 'prepared'
+        id: pull-request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.prepare.outputs.branch }}
+          PR_TITLE: ${{ steps.prepare.outputs.pr_title }}
+          PR_BODY: ${{ steps.prepare.outputs.pr_body }}
+        run: |
+          url=$(gh pr create \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "$BRANCH" \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --label agreement)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Link the signing issue to the Agreement PR
+        if: steps.prepare.outputs.status == 'prepared'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.prepare.outputs.issue_number }}
+          PR_URL: ${{ steps.pull-request.outputs.url }}
+        run: >-
+          gh issue comment "$ISSUE_NUMBER"
+          --body "Agreement PR created: ${PR_URL}. This issue will close automatically when a maintainer merges that PR."

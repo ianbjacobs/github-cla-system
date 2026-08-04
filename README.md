@@ -1,28 +1,31 @@
 # GitHub CLA Actions
 
-An Actions-only foundation for collecting and enforcing contributor agreements without operating a
-webhook server.
+An Actions-only contributor agreement workflow. It requires no hosted server, webhook endpoint, database, GitHub App private key, or long-running process.
 
-## A1 status
+## Current release: A2
 
-A1 extracts and tests the reusable agreement logic. The two workflow files are deliberately manual
-scaffolds:
+A2 automatically turns a valid **Sign Contributor Agreement** issue into a proposed update to `AGREEMENTS.yaml`:
 
-- A2 will activate automatic Agreement PR creation from an opened signing issue.
-- A3 will activate contribution-PR enforcement against the trusted default-branch registry.
+1. The contributor opens the Issue Form and checks both required acknowledgements.
+2. GitHub Actions reads the authenticated user and issue metadata from the event payload.
+3. The workflow creates `agreement/<github-id>/issue-<number>`.
+4. It updates `AGREEMENTS.yaml` on that branch only.
+5. It opens a pull request labeled `agreement` whose body contains `Closes #<issue>`.
+6. A maintainer reviews and merges the PR.
+7. Only the merge changes the canonical registry on the default branch and closes the signing issue.
 
-A1 does **not** change `AGREEMENTS.yaml` automatically and is safe to install while the later
-workflows are being developed.
+A3 will add required-check enforcement for contribution pull requests.
 
-## Trust model
+## Setup
 
-- Issue submission is the contributor's attestation.
-- A generated Agreement PR is a proposed registry change.
-- Only merging that PR changes `AGREEMENTS.yaml` on the default branch.
-- Only a default-branch registry entry authorizes future contributions.
-- Numeric GitHub user IDs are canonical; logins are informational.
+1. Replace `agreement/CONTRIBUTOR_AGREEMENT.md` and the Issue Form placeholder with approved agreement text.
+2. Commit `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml` and `.github/workflows/create-agreement-pr.yml` to the default branch.
+3. In **Settings → Actions → General → Workflow permissions**, grant read/write permissions and allow Actions to create pull requests.
+4. Ensure branch protection allows maintainers to merge Agreement PRs.
 
-## Validate A1
+See [docs/actions-only.md](docs/actions-only.md) for the architecture and token model.
+
+## Development
 
 ```bash
 npm install
@@ -30,18 +33,6 @@ npm run format
 npm run check
 ```
 
-The manual workflow scaffolds can also be run from the Actions tab.
+## Registry trust model
 
-## Migration from the hosted GitHub App branch
-
-See [`docs/migration.md`](docs/migration.md). Preserve the full GitHub App tag and milestone ZIPs
-before removing obsolete server files from the `actions-only` branch.
-
-## Before use
-
-Replace the placeholder agreement text in both:
-
-- `agreement/CONTRIBUTOR_AGREEMENT.md`
-- `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml`
-
-Have the final terms and electronic-acceptance process reviewed by appropriate legal counsel.
+`AGREEMENTS.yaml` on the default branch is authoritative. An opened issue is an attestation; an opened Agreement PR is a proposal; a merged Agreement PR is acceptance.
