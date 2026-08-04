@@ -1,88 +1,47 @@
-# GitHub CLA System
+# GitHub CLA Actions
 
-> **Release candidate**
->
-> `v1.0.0-rc.1` implements the planned workflow and production runtime, but still requires a live
-> GitHub smoke test, deployment review, security review, and legal review before production use.
-> The included CLA has no legal terms and must be replaced.
+An Actions-only foundation for collecting and enforcing contributor agreements without operating a
+webhook server.
 
-A framework-independent GitHub App that collects and enforces contributor agreements entirely in GitHub.
+## A1 status
 
-## Workflow
+A1 extracts and tests the reusable agreement logic. The two workflow files are deliberately manual
+scaffolds:
 
-1. A contributor selects **Sign Contributor Agreement** and submits the repository Issue Form.
-2. The app validates both required acknowledgements and uses the authenticated GitHub webhook identity.
-3. The app creates a branch containing an immutable record under `agreements/` and an updated `AGREEMENTS.yaml`.
-4. The app opens a pull request labeled `agreement` and closes the source issue with a link to it.
-5. A maintainer verifies the issue and merges the Agreement PR.
-6. Contribution pull requests pass only when the author's numeric GitHub user ID has a current, repository-scoped entry in `AGREEMENTS.yaml`.
-7. Checks are re-evaluated when contribution PRs open, reopen, or synchronize; when an Agreement PR merges; and when the default branch changes.
+- A2 will activate automatic Agreement PR creation from an opened signing issue.
+- A3 will activate contribution-PR enforcement against the trusted default-branch registry.
 
-Generated Agreement PRs are excluded from CLA enforcement to avoid a circular dependency.
+A1 does **not** change `AGREEMENTS.yaml` automatically and is safe to install while the later
+workflows are being developed.
 
-## Requirements
+## Trust model
 
-- Node.js 22.x
-- A GitHub App private key
-- GitHub App permissions: Checks, Contents, Issues, and Pull requests (read/write); Metadata (read)
-- Webhook events: Issues, Pull request, and Push
+- Issue submission is the contributor's attestation.
+- A generated Agreement PR is a proposed registry change.
+- Only merging that PR changes `AGREEMENTS.yaml` on the default branch.
+- Only a default-branch registry entry authorizes future contributions.
+- Numeric GitHub user IDs are canonical; logins are informational.
 
-## Local setup
+## Validate A1
 
 ```bash
-cp .env.example .env
 npm install
-npm run dev
+npm run format
+npm run check
 ```
 
-Set the GitHub App webhook URL to `https://your-host.example/webhooks/github` and use the same webhook secret in GitHub and `WEBHOOK_SECRET`.
+The manual workflow scaffolds can also be run from the Actions tab.
 
-## Build and test
+## Migration from the hosted GitHub App branch
 
-```bash
-npm run format  # writes formatting and safe import fixes
-npm run check   # read-only validation, type checking, and tests
-npm run build
-npm start
-```
+See [`docs/migration.md`](docs/migration.md). Preserve the full GitHub App tag and milestone ZIPs
+before removing obsolete server files from the `actions-only` branch.
 
-## Operations
+## Before use
 
-The service exposes `/health/live`, `/health/ready`, and an optional `/metrics` endpoint.
-It emits structured JSON logs, requires GitHub delivery IDs, deduplicates successful deliveries
-within a bounded process-local cache, and drains HTTP connections during shutdown. See [the deployment guide](docs/deployment.md), [installation guide](docs/installation.md), and
-[troubleshooting guide](docs/troubleshooting.md).
+Replace the placeholder agreement text in both:
 
-## Configuration
+- `agreement/CONTRIBUTOR_AGREEMENT.md`
+- `.github/ISSUE_TEMPLATE/sign-contributor-agreement.yml`
 
-Repository settings live in `.github/cla/config.yml`. Replace `.github/cla/agreement.md` and the Issue Form placeholder with legally reviewed, identical agreement text before production use.
-
-## Security model
-
-Webhook payloads are validated with HMAC-SHA256 using `X-Hub-Signature-256`. API calls use short-lived GitHub App installation access tokens. The numeric GitHub user ID is authoritative; logins are retained only for readability.
-
-## Container deployment
-
-```bash
-docker build -t github-cla-system:1.0.0-rc.1 .
-docker compose up --build
-```
-
-Mount the GitHub App private key read-only and terminate TLS before traffic reaches the app.
-
-## Installation and release
-
-Use the [GitHub App installation guide](docs/installation.md) for permissions, event subscriptions,
-repository setup, branch protection, and the required live smoke test. Release procedures are in
-[docs/release.md](docs/release.md), and the exact release-candidate scope is recorded in
-[docs/project-state.md](docs/project-state.md).
-
-## License
-
-W3C Software Notice and License. See `LICENSE`.
-
-## Organization-wide policies
-
-Set `agreementScope: organization` and `policyRepository: owner/repository` in `.github/cla/config.yml` to keep the canonical agreement and registry in a shared repository. See [the configuration reference](docs/configuration.md).
-
-Agreement versions are exact: changing `agreementVersion` requires contributors to accept the new version.
+Have the final terms and electronic-acceptance process reviewed by appropriate legal counsel.

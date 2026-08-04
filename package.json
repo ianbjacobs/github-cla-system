@@ -1,35 +1,26 @@
 {
-  "name": "github-cla-system",
-  "version": "1.0.0-rc.1",
+  "name": "github-cla-actions",
+  "version": "0.1.0-alpha.2",
   "private": true,
   "type": "module",
-  "description": "GitHub-native contributor agreement workflow implemented as a framework-independent GitHub App.",
+  "description": "Actions-only GitHub contributor agreement workflow.",
   "engines": {
     "node": ">=22 <23"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/src/server.js",
-    "check": "biome check . && tsc -p tsconfig.json --noEmit && vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "biome check --write .",
+    "format:check": "biome check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "biome check --write .",
-    "ci": "npm run check && npm run build"
+    "check": "npm run format:check && npm run test",
+    "validate:issue": "node scripts/validate-signing-issue.mjs",
+    "check:agreement": "node scripts/check-contributor-agreement.mjs"
   },
   "dependencies": {
-    "@octokit/auth-app": "^8.1.1",
-    "@octokit/rest": "^22.0.0",
-    "js-yaml": "^4.1.0",
-    "zod": "^4.0.0"
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",
-    "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.20.0",
-    "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },
   "license": "W3C"

@@ -1,0 +1,26 @@
+name: Create Agreement PR (A2 scaffold)
+
+# A2 will replace this manual trigger with `issues: { types: [opened] }` and add the
+# write permissions and GitHub API operations required to create the branch and PR.
+on:
+  workflow_dispatch:
+    inputs:
+      issue_body_file:
+        description: Path to a checked-in issue-body fixture for validating the A1 scaffold
+        required: true
+        default: examples/valid-signing-issue.md
+
+permissions:
+  contents: read
+
+jobs:
+  validate-signing-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run validate:issue -- "${{ inputs.issue_body_file }}"

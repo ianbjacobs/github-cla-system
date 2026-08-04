@@ -1,0 +1,25 @@
+name: Check Contributor Agreement (A3 scaffold)
+
+# A3 will replace this manual trigger with a trusted pull-request trigger and pass
+# `github.event.pull_request.user.id` to the same read-only verification script.
+on:
+  workflow_dispatch:
+    inputs:
+      github_id:
+        description: Numeric GitHub user ID to check
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check:agreement -- "${{ inputs.github_id }}"
