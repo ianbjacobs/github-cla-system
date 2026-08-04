@@ -61,5 +61,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
           CONTRIBUTOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          PULL_REQUEST_BASE_REF: ${{ github.event.pull_request.base.ref }}
           AGREEMENT_STATE: ${{ steps.evaluate.outputs.state }}
         run: node scripts/manage-contributor-agreement-comment.mjs
