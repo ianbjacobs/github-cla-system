@@ -37,3 +37,5 @@ npm run check
 ## Registry trust model
 
 `AGREEMENTS.yaml` on the default branch is authoritative. An opened issue is a contributor attestation; an opened Agreement PR is a proposal; a merged Agreement PR is project acceptance.
+
+Test
