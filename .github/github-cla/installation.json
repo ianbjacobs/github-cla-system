@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "installedVersion": "0.2.0-dev",
-  "installationType": "adopted",
+  "installationType": "installed",
   "files": {
     ".github/ISSUE_TEMPLATE/sign-contributor-agreement.yml": {
       "policy": "customizable",
