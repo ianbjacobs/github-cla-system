@@ -1,6 +1,8 @@
 # Installation and configuration
 
-This guide installs the current Actions-only system into a GitHub repository. The repository itself stores the agreement text, signing workflow, and accepted-agreement registry.
+**To install this tool in your repo see [github-cla-cli](https://github.com/ianbjacobs/github-cla-cli).
+
+Below we describe the installation of the CLA system into a GitHub repository. The repository itself stores the agreement text, signing workflow, and accepted-agreement registry.
 
 ## Prerequisites
 
